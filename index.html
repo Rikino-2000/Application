@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rimoft Bank</title>
+    <!-- Script Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+
+        /* Coque de téléphone */
+        .phone-mockup {
+            width: 280px;
+            height: 520px;
+            background: #000000;
+            border-radius: 36px;
+            padding: 10px;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 0 2px #334155;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Encoche / Notch */
+        .phone-notch {
+            width: 110px;
+            height: 20px;
+            background: #000000;
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .phone-speaker {
+            width: 32px;
+            height: 3px;
+            background: #1e293b;
+            border-radius: 2px;
+        }
+
+        /* Écran */
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #f8fafc;
+            border-radius: 28px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* --- ÉCRAN DE CONNEXION --- */
+        .login-view {
+            padding: 45px 18px 15px 18px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .app-logo {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 800;
+            color: #0284c7;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .login-title {
+            font-size: 11px;
+            color: #64748b;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid #e2e8f0;
+            background: #f1f5f9;
+            border-radius: 8px;
+            font-size: 12px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #0284c7;
+            background: #ffffff;
+        }
+
+        .input-field:disabled {
+            background-color: #e2e8f0;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: #0284c7;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 4px;
+        }
+
+        .btn-submit:hover { background: #0369a1; }
+        .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 11px;
+            text-align: center;
+            min-height: 16px;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .links-group {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 11px;
+        }
+
+        .links-group a {
+            color: #0284c7;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        /* --- ÉCRAN PRINCIPAL BANCAIRE --- */
+        .dashboard-view {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            background: #f8fafc;
+        }
+
+        /* Header avec motif géométrique bleu */
+        .bank-header {
+            background: linear-gradient(135deg, #0284c7 0%, #1e40af 100%);
+            position: relative;
+            padding: 35px 16px 20px 16px;
+            color: #ffffff;
+            overflow: hidden;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 8px 12px -3px rgba(2, 132, 199, 0.3);
+        }
+
+        .bank-header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.08);
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            transform: rotate(25deg);
+        }
+
+        .user-greeting {
+            font-size: 12px;
+            color: #e0f2fe;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .balance-container {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 2px;
+        }
+
+        .balance-main {
+            font-size: 32px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -1px;
+        }
+
+        .balance-cents {
+            font-size: 18px;
+            font-weight: 600;
+            color: #93c5fd;
+            margin-left: 1px;
+        }
+
+        .balance-currency {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-left: 6px;
+        }
+
+        .balance-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #bae6fd;
+        }
+
+        /* Zone de contenu */
+        .content-body {
+            padding: 12px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Boutons d'actions */
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 8px 4px;
+            border: none;
+            background: #ffffff;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 11px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .btn-action.active {
+            background: #0284c7;
+            color: #ffffff;
+            border-color: #0284c7;
+        }
+
+        /* Cartes d'information */
+        .card-panel {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #f1f5f9;
+            margin-bottom: 12px;
+        }
+
+        .panel-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .panel-desc {
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .credit-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        /* Liste des transactions */
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+            gap: 8px;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .tx-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            max-width: 70%;
+        }
+
+        .tx-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #334155;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tx-date {
+            font-size: 10px;
+            color: #94a3b8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tx-amount {
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .tx-plus { color: #16a34a; }
+        .tx-minus { color: #dc2626; }
+
+        /* Styles spécifiques aux boutons d'actions */
+        .btn-convert {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 9px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 4px;
+            transition: background 0.2s;
+        }
+        .btn-convert:hover { background-color: #0056b3; }
+        .btn-convert:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* Styles du bouton de recharge original */
+        .btn-recharge {
+            width: 100%;
+            padding: 9px;
+            border: none;
+            border-radius: 8px;
+            font-size: 11px;
+            cursor: not-allowed;
+            font-weight: bold;
+            transition: 0.2s;
+            background-color: #ccc;
+            color: #666;
+            margin-top: 4px;
+        }
+        .btn-recharge.active {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        .btn-recharge.active:hover {
+            background-color: #0056b3;
+        }
+
+        /* Style 100% uniforme pour tous les messages (Repris exactement du code original) */
+        .message { 
+            margin-top: 8px; 
+            margin-bottom: 8px;
+            padding: 5px 10px; 
+            font-size: 11px; 
+            font-weight: normal; 
+            color: #666; 
+            text-align: center;
+        }
+
+        .btn-claim {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 9px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 4px;
+            transition: background 0.2s;
+        }
+        .btn-claim:hover { background-color: #218838; }
+        .btn-claim:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .cf-turnstile {
+            display: flex;
+            justify-content: center;
+            margin-top: 4px;
+            margin-bottom: 4px;
+            transform: scale(0.8);
+            transform-origin: center;
+        }
+
+        #statusMessage {
+            margin-top: 6px;
+            font-size: 11px;
+            min-height: 14px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        #convertSuccessMessage {
+            display: none;
+            margin-top: 10px;
+            animation: fadeIn 0.5s ease;
+            text-align: center;
+        }
+
+        .success-text {
+            color: #28a745;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .success-sub {
+            color: #64748b;
+            font-size: 10px;
+            margin-top: 4px;
+        }
+
+        .error { color: #dc3545; }
+        .success { color: #28a745; }
+        .info { color: #007bff; }
+
+        .hidden { display: none; }
+        .hide { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- NOUVEAU : État vide (ni solde ni crédit dans le message) --- */
+        .empty-state-view {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 16px;
+        }
+
+        .empty-bubble {
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 14px;
+            padding: 16px 14px;
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            font-size: 12px;
+            line-height: 1.6;
+            color: #334155;
+            text-align: center;
+            max-width: 100%;
+        }
+
+        /* --- NOUVEAU : Bouton notification (haut droite du téléphone) --- */
+        .notif-bell-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.18);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 70;
+            padding: 0;
+        }
+
+        .notif-bell-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* --- NOUVEAU : Badge rouge (nombre de notifications) --- */
+        .notif-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 14px;
+            height: 14px;
+            padding: 0 3px;
+            border-radius: 7px;
+            background: #ef4444;
+            color: #ffffff;
+            font-size: 9px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            box-shadow: 0 0 0 2px #1e40af;
+        }
+
+        /* --- NOUVEAU : Panneau de notifications (rectangle à droite) --- */
+        .notif-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 68%;
+            height: 100%;
+            background: #ffffff;
+            box-shadow: -6px 0 16px rgba(0, 0, 0, 0.15);
+            z-index: 60;
+            padding: 42px 10px 12px 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.25s ease;
+        }
+
+        .notif-panel.open {
+            transform: translateX(0);
+        }
+
+        .notif-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .notif-panel-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .notif-warning {
+            font-size: 11px;
+            color: #ef4444;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.4;
+            padding: 0 4px;
+            margin-bottom: 10px;
+        }
+
+        .notif-close-btn {
+            background: none;
+            border: none;
+            font-size: 13px;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 2px 6px;
+        }
+
+        .notif-bubble {
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 10px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            font-size: 11px;
+            line-height: 1.5;
+            color: #334155;
+            background: #f8fafc;
+        }
+
+        .notif-empty {
+            font-size: 11px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone-mockup">
+    <div class="phone-notch">
+        <div class="phone-speaker"></div>
+    </div>
+
+    <div class="phone-screen">
+        
+        <!-- ÉCRAN DE CONNEXION -->
+        <div id="loginView" class="login-view">
+            <div class="app-logo">RIMOFT</div>
+            <div class="login-title">Connectez-vous à votre espace bancaire</div>
+
+            <form id="loginForm" onsubmit="return checkCredentials(event)">
+                <input type="text" id="usernameInput" class="input-field" placeholder="Identifiant / Email" required onfocus="clearErrorMessage()">
+                <input type="password" id="passwordInput" class="input-field" placeholder="Mot de passe" required onfocus="clearErrorMessage()">
+                <div class="error-message" id="errorMessage"></div>
+                <button type="submit" class="btn-submit">Se connecter</button>
+            </form>
+
+            <div class="links-group">
+                <a href="https://sites.google.com/view/rimoft/se-connecter/cree-un-compte">Créer un compte</a>
+                <a href="https://sites.google.com/view/rimoft/se-connecter/reinitialise-le-mot-de-passe">Mot de passe oublié ?</a>
+                <a href="https://sites.google.com/view/rimoft/se-connecter/supprimer-un-compte">Supprimer un compte</a>
+            </div>
+        </div>
+
+        <!-- TABLEAU DE BORD (INTERFACE BANCAIRE) -->
+        <div id="dashboardView" class="dashboard-view">
+
+            <!-- NOUVEAU : Bouton notification -->
+            <button id="notifBellBtn" class="notif-bell-btn" onclick="toggleNotifPanel()" aria-label="Notifications">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="#ffffff">
+                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                </svg>
+                <span id="notifBadge" class="notif-badge hide">0</span>
+            </button>
+
+            <!-- NOUVEAU : Panneau de notifications -->
+            <div id="notifPanel" class="notif-panel">
+                <div class="notif-panel-header">
+                    <span class="notif-panel-title">Notifications</span>
+                    <button class="notif-close-btn" onclick="closeNotifPanel()">✕</button>
+                </div>
+                <div class="notif-warning">⚠️ Ces notifications seront définitivement supprimées à votre prochaine connexion.</div>
+                <div id="notifList">
+                    <div class="notif-empty">Aucune notification.</div>
+                </div>
+            </div>
+
+            <div id="bankHeader" class="bank-header">
+                <div id="userGreeting" class="user-greeting">Bonjour</div>
+                <div class="balance-container">
+                    <span id="balMain" class="balance-main">0</span>
+                    <span id="balCents" class="balance-cents">.00</span>
+                    <span class="balance-currency">EUR</span>
+                </div>
+                <div class="balance-label">Solde Rimoft disponible</div>
+            </div>
+
+            <div id="contentBody" class="content-body">
+                <div class="action-buttons">
+                    <button id="btnCredit" class="btn-action active" onclick="switchTab('credit')">Crédit</button>
+                    <button id="btnTx" class="btn-action" onclick="switchTab('transactions')">Transactions</button>
+                    <button id="btnAdd" class="btn-action" onclick="switchTab('add')">Ajouter</button>
+                </div>
+
+                <!-- Section Crédit -->
+                <div id="panelCredit" class="card-panel">
+                    <div class="panel-title">Montant du Crédit</div>
+                    <div id="creditAmount" class="credit-value">
+                        <span id="creditValueNum">0.00</span>
+                        <span>€</span>
+                    </div>
+                </div>
+
+                <!-- Section Transactions -->
+                <div id="panelTx" class="card-panel hide">
+                    <div class="panel-title">Dernières Transactions</div>
+                    <div id="txList">
+                        <div style="font-size: 11px; color: #94a3b8;">Aucune transaction récente.</div>
+                    </div>
+                </div>
+
+                <!-- Section Ajouter -->
+                <div id="panelAdd" class="hide">
+                    
+                    <!-- Bloc Convertisseur de Crédits -->
+                    <div class="card-panel">
+                        <div class="panel-title">🔄 Convertisseur Rimoft</div>
+                        <div class="panel-desc">Convertissez vos crédits en solde principal.</div>
+                        
+                        <form id="convertForm" onsubmit="checkAndConvert(event)">
+                            <input type="text" id="convertEmailInput" class="input-field" placeholder="Email" required onfocus="clearConvertError()">
+                            <input type="password" id="convertPasswordInput" class="input-field" placeholder="Mot de passe" required onfocus="clearConvertError()">
+                            <input type="number" id="convertAmountInput" class="input-field" placeholder="Montant à transférer" step="1" min="1" value="1" required onfocus="clearConvertError()">
+                            
+                            <div class="error-message" id="convertErrorMessage"></div>
+                            <button type="submit" id="convertSubmitBtn" class="btn-convert">CONVERTIR LES CRÉDITS</button>
+                        </form>
+
+                        <div id="convertSuccessMessage">
+                            <div class="success-text">✅ Transfert réussi !</div>
+                            <div class="success-sub" id="convertSuccessSubText">Vos crédits ont été convertis avec succès.</div>
+                        </div>
+                    </div>
+
+                    <!-- Bloc Recharge par Code (Repris fidèlement de votre code d'origine) -->
+                    <div class="card-panel">
+                        <div class="panel-title">💳 Recharge par Code</div>
+                        <div class="panel-desc">Entrez votre code de recharge Rimoft (16 chiffres).</div>
+                        
+                        <input type="email" id="email" class="input-field" placeholder="exemple@domaine.com" required>
+                        <input type="password" id="password" class="input-field" placeholder="••••••••" required>
+                        <input type="text" id="code" class="input-field" maxlength="19" placeholder="0000-0000-0000-0000" required>
+                        
+                        <!-- Widget Turnstile dédié -->
+                        <div class="cf-turnstile" data-sitekey="0x4AAAAAADQhiAC09ulHVGUP" data-theme="light"></div>
+
+                        <!-- Zone de Message Unifiée -->
+                        <div id="msgBox" class="message hidden"></div>
+                        
+                        <!-- Bouton Recharger d'Origine -->
+                        <button id="btnRecharge" class="btn-recharge" onclick="rechargerCompte()" disabled>Recharger</button>
+                    </div>
+
+                    <!-- Bloc Cadeau Journalier -->
+                    <div class="card-panel">
+                        <div class="panel-title">🎁 Cadeau Journalier</div>
+                        <div class="panel-desc">Réclamez votre récompense gratuite chaque jour !</div>
+                        
+                        <form onsubmit="claimDaily(event)">
+                            <input type="text" id="claimEmailInput" class="input-field" placeholder="Votre e-mail / identifiant" required>
+                            <input type="password" id="claimPasswordInput" class="input-field" placeholder="Votre mot de passe" required>
+                            
+                            <div class="cf-turnstile" data-sitekey="0x4AAAAAADQhiAC09ulHVGUP" data-theme="light"></div>
+                            
+                            <button type="submit" id="claimBtn" class="btn-claim">Réclamer ma récompense</button>
+                        </form>
+                        <div id="statusMessage"></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- NOUVEAU : État vide - ni "€ (Rimoft)" ni "Crédit" détecté dans le message -->
+            <div id="emptyStateView" class="empty-state-view hide">
+                <div class="empty-bubble" id="emptyStateText"></div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4aCiLNgicKkEB8xt9DtoGnnVzSigcdiwaXT_VA39Kxd5Uoi5bOUSFt7wZEzra8o-A5Q/exec";
+    const CLAIM_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwe0Le4GSzBBaYcWkDYWL1RaCxg2O7D1fS3Fm7Z47mfAwto_3FjKE6QxnGgOuM95xUr/exec";
+    const CONVERT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz5yY5cFRQHSmYPekifMd6sCYNxqfqGUMC-FxZls3k2wwpTBusBO8HDaL1d-lDGC48c3A/exec";
+    
+    /* URL du script Google de recharge */
+    const RECHARGE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwnKeGwxXy1JxSiITF8InXGvgBBrmQ-fwE3IoQW9dP0h5uhkBQ3_p_frupp6N2XHcOK/exec";
+
+    /* NOUVEAU : URL du script qui vide le champ Notification */
+    const CLEAR_NOTIF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYltroXMAKv0FZz5RVdV-uNNgFdZinFr63NZ86Yq8tzbPBbmK87PPYKRfVeUhvIiugLw/exec";
+
+    // Identifiants conservés en mémoire après connexion, réutilisés pour vider les notifications
+    let currentUserEmail = "";
+    let currentUserPassword = "";
+    let notifCount = 0;
+
+    /* --- LOGIQUE DE RECHARGE DE CODE (Reprise exactement de votre script) --- */
+    document.getElementById('code').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        let formattedValue = '';
+        for (let i = 0; i < value.length && i < 16; i++) {
+            if (i > 0 && i % 4 === 0) { formattedValue += '-'; }
+            formattedValue += value[i];
+        }
+        e.target.value = formattedValue;
+
+        if (value.length === 16) {
+            verifierCode();
+        }
+    });
+
+    function afficherMessage(texte) {
+        const msgBox = document.getElementById('msgBox');
+        msgBox.innerText = texte;
+        msgBox.classList.remove('hidden');
+    }
+
+    function verifierCode() {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const code = document.getElementById('code').value.trim();
+        const btnRecharge = document.getElementById('btnRecharge');
+        
+        const turnstileWidget = document.querySelector('[name="cf-turnstile-response"]');
+        const turnstileResponse = turnstileWidget ? turnstileWidget.value : "";
+        
+        if (!turnstileResponse) {
+            afficherMessage("Veuillez cocher et valider le système de sécurité (Captcha).");
+            return;
+        }
+        
+        if (email.toLowerCase().endsWith('.rik')) {
+            afficherMessage("Action impossible : Cette extension d'e-mail est réservée.");
+            if (typeof turnstile !== 'undefined') turnstile.reset();
+            return;
+        }
+        
+        if (!email || !password || code.replace(/-/g, '').length !== 16) {
+            afficherMessage("Veuillez entrer votre email, mot de passe et un code valide.");
+            if (typeof turnstile !== 'undefined') turnstile.reset();
+            return;
+        }
+
+        afficherMessage("Vérification en cours...");
+
+        fetch(RECHARGE_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "verifier", email: email, password: password, code: code, captcha: turnstileResponse })
+        })
+        .then(res => res.json())
+        .then(response => {
+            if (response.success) {
+                afficherMessage(response.message);
+                
+                document.getElementById('email').disabled = true;
+                document.getElementById('password').disabled = true;
+                document.getElementById('code').disabled = true;
+                
+                btnRecharge.disabled = false;
+                btnRecharge.classList.add('active');
+            } else {
+                afficherMessage(response.message);
+                resetBoutonRecharge();
+            }
+        })
+        .catch(err => {
+            afficherMessage("Erreur de communication avec le script Google.");
+            resetBoutonRecharge();
+        });
+    }
+
+    function resetBoutonRecharge() {
+        const btnRecharge = document.getElementById('btnRecharge');
+        btnRecharge.disabled = true;
+        btnRecharge.classList.remove('active');
+        if (typeof turnstile !== 'undefined') turnstile.reset();
+    }
+
+    function rechargerCompte() {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const code = document.getElementById('code').value.trim();
+        const btnRecharge = document.getElementById('btnRecharge');
+        
+        afficherMessage("Application de la recharge...");
+        btnRecharge.disabled = true;
+        btnRecharge.classList.remove('active');
+
+        fetch(RECHARGE_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "recharger", email: email, password: password, code: code })
+        })
+        .then(res => res.json())
+        .then(response => {
+            if (response.success) {
+                afficherMessage(response.message);
+                
+                document.getElementById('email').disabled = false;
+                document.getElementById('password').disabled = false;
+                document.getElementById('code').disabled = false;
+                document.getElementById('code').value = ""; 
+                document.getElementById('password').value = ""; 
+                resetBoutonRecharge();
+            } else {
+                afficherMessage(response.message);
+                btnRecharge.disabled = false;
+                btnRecharge.classList.add('active');
+            }
+        })
+        .catch(err => {
+            afficherMessage("Erreur lors de l'application de la recharge.");
+            btnRecharge.disabled = false;
+            btnRecharge.classList.add('active');
+        });
+    }
+
+    /* --- GESTION DE LA CONNEXION PRINCIPALE --- */
+    async function checkCredentials(event) {
+        event.preventDefault();
+
+        const submitButton = event.target.querySelector("button");
+        if (submitButton) submitButton.disabled = true;
+
+        const email = document.getElementById("usernameInput").value;
+        const password = document.getElementById("passwordInput").value;
+
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ email: email, password: password })
+            });
+
+            const result = await response.json();
+
+            if (result.status === "success") {
+                // NOUVEAU : on garde les identifiants pour pouvoir vider les notifications ensuite
+                currentUserEmail = email;
+                currentUserPassword = password;
+
+                parseAndRenderUserData(result.message);
+
+                // NOUVEAU : rendu du panneau de notifications (champ "notification" renvoyé par le script)
+                renderNotifications(result.notification || "");
+                closeNotifPanel();
+                
+                // Pré-remplir automatiquement tous les formulaires
+                document.getElementById("claimEmailInput").value = email;
+                document.getElementById("claimPasswordInput").value = password;
+                document.getElementById("convertEmailInput").value = email;
+                document.getElementById("convertPasswordInput").value = password;
+                document.getElementById("email").value = email;
+                document.getElementById("password").value = password;
+
+                document.getElementById("loginView").style.display = "none";
+                document.getElementById("dashboardView").style.display = "flex";
+            } else {
+                document.getElementById("errorMessage").innerText = result.message;
+                if (submitButton) submitButton.disabled = false;
+            }
+
+        } catch (error) {
+            document.getElementById("errorMessage").innerText = "Erreur de connexion au serveur.";
+            if (submitButton) submitButton.disabled = false;
+        }
+
+        return false;
+    }
+
+    function clearErrorMessage() {
+        document.getElementById("errorMessage").innerText = "";
+    }
+
+    function switchTab(tab) {
+        const btnCredit = document.getElementById("btnCredit");
+        const btnTx = document.getElementById("btnTx");
+        const btnAdd = document.getElementById("btnAdd");
+
+        const panelCredit = document.getElementById("panelCredit");
+        const panelTx = document.getElementById("panelTx");
+        const panelAdd = document.getElementById("panelAdd");
+
+        btnCredit.classList.remove('active');
+        btnTx.classList.remove('active');
+        btnAdd.classList.remove('active');
+
+        panelCredit.classList.add('hide');
+        panelTx.classList.add('hide');
+        panelAdd.classList.add('hide');
+
+        if (tab === 'credit') {
+            btnCredit.classList.add('active');
+            panelCredit.classList.remove('hide');
+        } else if (tab === 'transactions') {
+            btnTx.classList.add('active');
+            panelTx.classList.remove('hide');
+        } else if (tab === 'add') {
+            btnAdd.classList.add('active');
+            panelAdd.classList.remove('hide');
+        }
+    }
+
+    /* --- NOUVEAU : GESTION DU PANNEAU DE NOTIFICATIONS --- */
+    function toggleNotifPanel() {
+        const panel = document.getElementById("notifPanel");
+        const isOpening = !panel.classList.contains("open");
+        panel.classList.toggle("open");
+
+        // On ne déclenche la suppression qu'une fois, à la première ouverture
+        // tant qu'il reste des notifications non vidées (notifCount > 0).
+        if (isOpening && notifCount > 0) {
+            hideNotifBadge();
+            deleteNotificationsOnServer();
+        }
+    }
+
+    function closeNotifPanel() {
+        document.getElementById("notifPanel").classList.remove("open");
+    }
+
+    function hideNotifBadge() {
+        notifCount = 0;
+        const badge = document.getElementById("notifBadge");
+        badge.classList.add("hide");
+        badge.innerText = "0";
+    }
+
+    function deleteNotificationsOnServer() {
+        if (!currentUserEmail || !currentUserPassword) return;
+        fetch(CLEAR_NOTIF_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ email: currentUserEmail, password: currentUserPassword })
+        }).catch(() => {
+            // Échec silencieux : on ne bloque pas l'affichage du panneau pour ça
+        });
+    }
+
+    function renderNotifications(rawNotif) {
+        const container = document.getElementById("notifList");
+        const badge = document.getElementById("notifBadge");
+
+        if (!rawNotif || !rawNotif.trim()) {
+            container.innerHTML = '<div class="notif-empty">Aucune notification.</div>';
+            notifCount = 0;
+            badge.classList.add("hide");
+            return;
+        }
+
+        // Chaque notification est précédée de "::" dans le champ Firestore
+        const parts = rawNotif.split("::").map(s => s.trim()).filter(s => s.length > 0);
+
+        if (parts.length === 0) {
+            container.innerHTML = '<div class="notif-empty">Aucune notification.</div>';
+            notifCount = 0;
+            badge.classList.add("hide");
+            return;
+        }
+
+        let html = "";
+        parts.forEach(part => {
+            html += `<div class="notif-bubble">${parseCustomMessage(part).replace(/\n/g, "<br>")}</div>`;
+        });
+        container.innerHTML = html;
+
+        // NOUVEAU : mise à jour du badge rouge avec le nombre de notifications
+        notifCount = parts.length;
+        badge.innerText = notifCount > 9 ? "9+" : String(notifCount);
+        badge.classList.remove("hide");
+    }
+
+    /* --- LOGIQUE DU CONVERTISSEUR DE CRÉDITS --- */
+    async function checkAndConvert(event) {
+        event.preventDefault();
+        const email = document.getElementById("convertEmailInput").value.trim();
+        const password = document.getElementById("convertPasswordInput").value;
+        const amountToTransfer = parseFloat(document.getElementById("convertAmountInput").value);
+        const errorDiv = document.getElementById("convertErrorMessage");
+        const btn = document.getElementById("convertSubmitBtn");
+
+        errorDiv.innerText = "";
+
+        if (email.toLowerCase().endsWith(".rik")) {
+            errorDiv.innerText = "Action impossible : Cette extension d'e-mail est réservée.";
+            return;
+        }
+
+        if (isNaN(amountToTransfer) || amountToTransfer <= 0) {
+            errorDiv.innerText = "Veuillez saisir un montant valide.";
+            return;
+        }
+
+        btn.innerText = "Traitement en cours...";
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(CONVERT_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ 
+                    email: email, 
+                    password: password, 
+                    amount: amountToTransfer 
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.status === "success") {
+                document.getElementById("convertForm").style.display = "none";
+                document.getElementById("convertSuccessSubText").innerText = result.message;
+                document.getElementById("convertSuccessMessage").style.display = "block";
+            } else {
+                errorDiv.innerText = result.message;
+                btn.innerText = "CONVERTIR LES CRÉDITS";
+                btn.disabled = false;
+            }
+        } catch (error) {
+            errorDiv.innerText = "Erreur de communication avec le serveur de conversion.";
+            btn.innerText = "CONVERTIR LES CRÉDITS";
+            btn.disabled = false;
+        }
+    }
+
+    function clearConvertError() {
+        document.getElementById("convertErrorMessage").innerText = "";
+    }
+
+    /* --- LOGIQUE DU CADEAU JOURNALIER --- */
+    async function claimDaily(event) {
+        event.preventDefault();
+        const email = document.getElementById("claimEmailInput").value.trim();
+        const password = document.getElementById("claimPasswordInput").value;
+        const btn = document.getElementById("claimBtn");
+        const status = document.getElementById("statusMessage");
+
+        status.innerHTML = "<span class='info'>Vérification en cours...</span>";
+        btn.disabled = true;
+
+        const turnstileInputs = document.querySelectorAll('[name="cf-turnstile-response"]');
+        let turnstileResponse = "";
+        turnstileInputs.forEach(inp => {
+            if (inp.value) turnstileResponse = inp.value;
+        });
+        
+        if (!turnstileResponse) {
+            status.innerHTML = "<span class='error'>Veuillez valider le système de sécurité (Captcha).</span>";
+            btn.disabled = false;
+            return;
+        }
+
+        if (email.toLowerCase().endsWith(".rik")) {
+            status.innerHTML = "<span class='error'>Action impossible pour les comptes .rik</span>";
+            btn.disabled = false;
+            if (typeof turnstile !== 'undefined') turnstile.reset();
+            return;
+        }
+
+        try {
+            const response = await fetch(CLAIM_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ email: email, password: password })
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === "success") {
+                status.innerHTML = `<span class='success'>${result.message}</span>`;
+            } else {
+                status.innerHTML = `<span class='error'>${result.message}</span>`;
+                btn.disabled = false;
+            }
+        } catch (e) {
+            status.innerHTML = "<span class='error'>Erreur de communication avec le serveur.</span>";
+            btn.disabled = false;
+        }
+        
+        if (typeof turnstile !== 'undefined') turnstile.reset();
+    }
+
+    /* --- ANALYSE ET AFFICHAGE DES DONNÉES UTILISATEUR --- */
+    function parseCustomMessage(message) {
+        const commandRegex = /\('\s*([^;]+)\s*;\s*(\d+)\s*'\)/g;
+        let commands = [];
+        let match;
+        
+        while ((match = commandRegex.exec(message)) !== null) {
+            commands.push({
+                type: match[1].trim(),
+                count: parseInt(match[2]),
+                index: match.index
+            });
+        }
+
+        let cleanText = message.replace(commandRegex, "");
+        let charObjects = cleanText.split('').map(char => ({ char, styles: [] }));
+
+        commands.forEach(cmd => {
+            let textBefore = message.substring(0, cmd.index).replace(commandRegex, "");
+            let currentPos = textBefore.length;
+            let wordsTargeted = 0;
+            let inWord = false;
+
+            for (let i = currentPos - 1; i >= 0; i--) {
+                let isChar = /\S/.test(charObjects[i].char);
+                if (isChar && !inWord) {
+                    wordsTargeted++;
+                    inWord = true;
+                } else if (!isChar) {
+                    inWord = false;
+                }
+
+                if (wordsTargeted <= cmd.count && wordsTargeted > 0) {
+                    charObjects[i].styles.push(cmd.type);
+                }
+                if (wordsTargeted > cmd.count) break;
+            }
+        });
+
+        let finalHtml = "";
+        charObjects.forEach(obj => {
+            let s = obj.char;
+            obj.styles.forEach(style => {
+                if (style === 'G') {
+                    s = `<b>${s}</b>`;
+                } else if (style === 'S') {
+                    s = `<u>${s}</u>`;
+                } else if (/^\d+$/.test(style)) {
+                    s = `<span style="font-size:${style}px">${s}</span>`;
+                } else if (style.match(/^\d+(em|%)?$|^small$|^large$|^medium$/i)) {
+                    s = `<span style="font-size:${style}">${s}</span>`;
+                } else {
+                    s = `<span style="color:${style}">${s}</span>`;
+                }
+            });
+            finalHtml += s;
+        });
+
+        return finalHtml;
+    }
+
+    function parseAndRenderUserData(rawMessage) {
+        const userMatch = rawMessage.match(/^([^\n<]+)/);
+        if (userMatch) {
+            document.getElementById("userGreeting").innerHTML = parseCustomMessage(userMatch[1].trim());
+        }
+
+        const rimoftMatch = rawMessage.match(/€\s*\(Rimoft\)\s*:\s*([\d\.]+[\s\S]*?)(?=\n|Crédit|::|$)/i);
+        const creditMatch = rawMessage.match(/Crédit\s*:\s*([\d\.]+[\s\S]*?)(?=\n|::|€\s*\(Rimoft\)|$)/i);
+
+        // NOUVEAU : ni "€ (Rimoft)" ni "Crédit" détecté -> on affiche uniquement le message
+        // dans une bulle centrée, le reste du tableau de bord (header + onglets) reste masqué.
+        if (!rimoftMatch && !creditMatch) {
+            document.getElementById("bankHeader").classList.add("hide");
+            document.getElementById("contentBody").classList.add("hide");
+            document.getElementById("emptyStateView").classList.remove("hide");
+            document.getElementById("emptyStateText").innerHTML = parseCustomMessage(rawMessage).replace(/\n/g, "<br>");
+            return;
+        }
+
+        document.getElementById("emptyStateView").classList.add("hide");
+        document.getElementById("bankHeader").classList.remove("hide");
+        document.getElementById("contentBody").classList.remove("hide");
+
+        if (rimoftMatch) {
+            const parsedSolde = parseCustomMessage(rimoftMatch[1].trim());
+            const numVal = parseFloat(rimoftMatch[1].replace(/\('\s*[^;]+\s*;\s*\d+\s*'\)/g, "").trim());
+            if (!isNaN(numVal)) {
+                const parts = numVal.toFixed(2).split('.');
+                document.getElementById("balMain").innerText = parts[0];
+                document.getElementById("balCents").innerText = "." + parts[1];
+            } else {
+                document.getElementById("balMain").innerHTML = parsedSolde;
+                document.getElementById("balCents").innerText = "";
+            }
+        }
+
+        if (creditMatch) {
+            let cleanCredit = creditMatch[1].replace(/€\s*\(Rimoft\)/gi, "").replace(/€/g, "").trim();
+            document.getElementById("creditAmount").innerHTML = `<span>${parseCustomMessage(cleanCredit)}</span><span>€</span>`;
+        }
+
+        const txRegex = /::\s*([^;]+);\s*([^;]+);\s*([^;]+);\s*([^;]+);\s*([^\n<]+)/g;
+        let txMatch;
+        let txHtml = "";
+
+        while ((txMatch = txRegex.exec(rawMessage)) !== null) {
+            const jour = parseCustomMessage(txMatch[1].trim());
+            const heure = parseCustomMessage(txMatch[2].trim());
+            const ancienSolde = parseCustomMessage(txMatch[3].trim());
+            const montantVal = parseCustomMessage(txMatch[4].trim());
+            const pseudo = parseCustomMessage(txMatch[5].trim());
+
+            const isPositive = txMatch[4].includes('+');
+            const colorClass = isPositive ? 'tx-plus' : 'tx-minus';
+
+            txHtml += `
+                <div class="transaction-item">
+                    <div class="tx-info">
+                        <span class="tx-title">${pseudo} • Virement Rimoft</span>
+                        <span class="tx-date">${ancienSolde} • ${jour} • ${heure}</span>
+                    </div>
+                    <div class="tx-amount ${colorClass}">${montantVal}</div>
+                </div>
+            `;
+        }
+
+        if (txHtml !== "") {
+            document.getElementById("txList").innerHTML = txHtml;
+        }
+    }
+</script>
+
+</body>
+</html>

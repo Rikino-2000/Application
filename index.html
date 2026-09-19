@@ -6,8 +6,11 @@
     <title>Rimoft Bank</title>
     <!-- Script Cloudflare Turnstile -->
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    
+
     <style>
+        /* ============================================================
+           STYLES D'ORIGINE DE LA PAGE DE CONNEXION - NE PAS MODIFIER
+           ============================================================ */
         * {
             box-sizing: border-box;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -157,6 +160,7 @@
             text-decoration: none;
             display: block;
             margin-bottom: 6px;
+            cursor: pointer;
         }
 
         /* --- ÉCRAN PRINCIPAL BANCAIRE --- */
@@ -167,7 +171,6 @@
             background: #f8fafc;
         }
 
-        /* Header avec motif géométrique bleu */
         .bank-header {
             background: linear-gradient(135deg, #0284c7 0%, #1e40af 100%);
             position: relative;
@@ -232,14 +235,12 @@
             color: #bae6fd;
         }
 
-        /* Zone de contenu */
         .content-body {
             padding: 12px;
             flex: 1;
             overflow-y: auto;
         }
 
-        /* Boutons d'actions */
         .action-buttons {
             display: flex;
             gap: 6px;
@@ -268,7 +269,6 @@
             border-color: #0284c7;
         }
 
-        /* Cartes d'information */
         .card-panel {
             background: #ffffff;
             border-radius: 14px;
@@ -303,7 +303,6 @@
             white-space: nowrap;
         }
 
-        /* Liste des transactions */
         .transaction-item {
             display: flex;
             justify-content: space-between;
@@ -350,7 +349,6 @@
         .tx-plus { color: #16a34a; }
         .tx-minus { color: #dc2626; }
 
-        /* Styles spécifiques aux boutons d'actions */
         .btn-convert {
             background-color: #007bff;
             color: white;
@@ -367,7 +365,6 @@
         .btn-convert:hover { background-color: #0056b3; }
         .btn-convert:disabled { background-color: #ccc; cursor: not-allowed; }
 
-        /* Styles du bouton de recharge original */
         .btn-recharge {
             width: 100%;
             padding: 9px;
@@ -390,14 +387,13 @@
             background-color: #0056b3;
         }
 
-        /* Style 100% uniforme pour tous les messages (Repris exactement du code original) */
-        .message { 
-            margin-top: 8px; 
+        .message {
+            margin-top: 8px;
             margin-bottom: 8px;
-            padding: 5px 10px; 
-            font-size: 11px; 
-            font-weight: normal; 
-            color: #666; 
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: normal;
+            color: #666;
             text-align: center;
         }
 
@@ -461,7 +457,6 @@
         .hide { display: none !important; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- NOUVEAU : État vide (ni solde ni crédit dans le message) --- */
         .empty-state-view {
             display: flex;
             flex: 1;
@@ -483,7 +478,6 @@
             max-width: 100%;
         }
 
-        /* --- NOUVEAU : Bouton notification (haut droite du téléphone) --- */
         .notif-bell-btn {
             position: absolute;
             top: 14px;
@@ -505,7 +499,6 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
-        /* --- NOUVEAU : Badge rouge (nombre de notifications) --- */
         .notif-badge {
             position: absolute;
             top: -4px;
@@ -525,7 +518,6 @@
             box-shadow: 0 0 0 2px #1e40af;
         }
 
-        /* --- NOUVEAU : Panneau de notifications (rectangle à droite) --- */
         .notif-panel {
             position: absolute;
             top: 0;
@@ -600,6 +592,140 @@
             text-align: center;
             margin-top: 20px;
         }
+
+        /* ============================================================
+           STYLES AJOUTÉS POUR LES 3 FORMULAIRES FUSIONNÉS
+           Chaque bloc est "scopé" par son propre id de conteneur pour ne
+           jamais toucher ni entrer en conflit avec les styles ci-dessus.
+           ============================================================ */
+
+        #registerView, #resetView, #deleteView {
+            height: 100%;
+            width: 100%;
+            overflow-y: auto;
+            flex-direction: column;
+            padding: 35px 16px 15px 16px;
+        }
+
+        /* --- Créer un compte --- */
+        #registerView .app-logo { font-size: 22px; margin-bottom: 2px; }
+        .register-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #334155;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        #registerView .input-field { padding: 8px 10px; margin-bottom: 6px; font-size: 11px; }
+        #registerView .btn-submit { padding: 9px; font-size: 11px; }
+        #registerView .error-message { font-size: 10px; min-height: 14px; }
+        .reg-success-message {
+            color: #16a34a;
+            font-size: 11px;
+            text-align: center;
+            margin-bottom: 12px;
+            display: none;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        .reg-info-text {
+            color: #64748b;
+            font-size: 10px;
+            text-align: center;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        #registerView .links-group { margin-top: 12px; font-size: 10px; }
+        #registerView .links-group a { font-weight: 600; display: inline-block; margin-top: 4px; }
+        #registerView .cf-turnstile { margin-top: 2px; margin-bottom: 4px; transform: scale(0.75); }
+        #regVerifySection, #regValidateSection, #regAfterSuccess { display: none; }
+
+        /* --- Mot de passe oublié --- */
+        #resetView .app-logo { font-size: 22px; margin-bottom: 2px; }
+        .reset-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        .reset-desc {
+            color: #64748b;
+            font-size: 11px;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 16px;
+            line-height: 1.3;
+        }
+        #resetView .input-field { margin-bottom: 12px; }
+        .reset-success-message {
+            color: #16a34a;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 12px;
+            display: none;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+        .back-login {
+            margin-top: auto;
+            padding-top: 15px;
+            text-align: center;
+            font-size: 11px;
+        }
+        .back-login a { color: #0284c7; text-decoration: none; font-weight: 600; cursor: pointer; }
+        #resetView .cf-turnstile { margin-bottom: 8px; }
+
+        /* --- Supprimer un compte --- */
+        #deleteView .app-logo { font-size: 22px; margin-bottom: 2px; }
+        .main-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .intro-text {
+            color: #64748b;
+            font-size: 11px;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 16px;
+            line-height: 1.3;
+        }
+        #deleteView .input-field:focus { border-color: #ef4444; }
+        .warning-text {
+            color: #dc2626;
+            font-weight: 700;
+            font-size: 10px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: -0.2px;
+        }
+        .btn-delete {
+            width: 100%;
+            background: #ef4444;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-delete:hover { background: #dc2626; }
+        .btn-delete:disabled { background: #94a3b8; cursor: not-allowed; }
+        .del-success-message {
+            color: #16a34a;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 12px;
+            display: none;
+            font-weight: 700;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
@@ -610,8 +736,10 @@
     </div>
 
     <div class="phone-screen">
-        
-        <!-- ÉCRAN DE CONNEXION -->
+
+        <!-- ============================================================
+             ÉCRAN DE CONNEXION - CODE D'ORIGINE, INCHANGÉ
+             ============================================================ -->
         <div id="loginView" class="login-view">
             <div class="app-logo">RIMOFT</div>
             <div class="login-title">Connectez-vous à votre espace bancaire</div>
@@ -630,10 +758,11 @@
             </div>
         </div>
 
-        <!-- TABLEAU DE BORD (INTERFACE BANCAIRE) -->
+        <!-- ============================================================
+             TABLEAU DE BORD - CODE D'ORIGINE, INCHANGÉ
+             ============================================================ -->
         <div id="dashboardView" class="dashboard-view">
 
-            <!-- NOUVEAU : Bouton notification -->
             <button id="notifBellBtn" class="notif-bell-btn" onclick="toggleNotifPanel()" aria-label="Notifications">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="#ffffff">
                     <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
@@ -641,7 +770,6 @@
                 <span id="notifBadge" class="notif-badge hide">0</span>
             </button>
 
-            <!-- NOUVEAU : Panneau de notifications -->
             <div id="notifPanel" class="notif-panel">
                 <div class="notif-panel-header">
                     <span class="notif-panel-title">Notifications</span>
@@ -670,7 +798,6 @@
                     <button id="btnAdd" class="btn-action" onclick="switchTab('add')">Ajouter</button>
                 </div>
 
-                <!-- Section Crédit -->
                 <div id="panelCredit" class="card-panel">
                     <div class="panel-title">Montant du Crédit</div>
                     <div id="creditAmount" class="credit-value">
@@ -679,7 +806,6 @@
                     </div>
                 </div>
 
-                <!-- Section Transactions -->
                 <div id="panelTx" class="card-panel hide">
                     <div class="panel-title">Dernières Transactions</div>
                     <div id="txList">
@@ -687,19 +813,17 @@
                     </div>
                 </div>
 
-                <!-- Section Ajouter -->
                 <div id="panelAdd" class="hide">
-                    
-                    <!-- Bloc Convertisseur de Crédits -->
+
                     <div class="card-panel">
                         <div class="panel-title">🔄 Convertisseur Rimoft</div>
                         <div class="panel-desc">Convertissez vos crédits en solde principal.</div>
-                        
+
                         <form id="convertForm" onsubmit="checkAndConvert(event)">
                             <input type="text" id="convertEmailInput" class="input-field" placeholder="Email" required onfocus="clearConvertError()">
                             <input type="password" id="convertPasswordInput" class="input-field" placeholder="Mot de passe" required onfocus="clearConvertError()">
                             <input type="number" id="convertAmountInput" class="input-field" placeholder="Montant à transférer" step="1" min="1" value="1" required onfocus="clearConvertError()">
-                            
+
                             <div class="error-message" id="convertErrorMessage"></div>
                             <button type="submit" id="convertSubmitBtn" class="btn-convert">CONVERTIR LES CRÉDITS</button>
                         </form>
@@ -710,36 +834,31 @@
                         </div>
                     </div>
 
-                    <!-- Bloc Recharge par Code (Repris fidèlement de votre code d'origine) -->
                     <div class="card-panel">
                         <div class="panel-title">💳 Recharge par Code</div>
                         <div class="panel-desc">Entrez votre code de recharge Rimoft (16 chiffres).</div>
-                        
+
                         <input type="email" id="email" class="input-field" placeholder="exemple@domaine.com" required>
                         <input type="password" id="password" class="input-field" placeholder="••••••••" required>
                         <input type="text" id="code" class="input-field" maxlength="19" placeholder="0000-0000-0000-0000" required>
-                        
-                        <!-- Widget Turnstile dédié -->
+
                         <div class="cf-turnstile" data-sitekey="0x4AAAAAADQhiAC09ulHVGUP" data-theme="light"></div>
 
-                        <!-- Zone de Message Unifiée -->
                         <div id="msgBox" class="message hidden"></div>
-                        
-                        <!-- Bouton Recharger d'Origine -->
+
                         <button id="btnRecharge" class="btn-recharge" onclick="rechargerCompte()" disabled>Recharger</button>
                     </div>
 
-                    <!-- Bloc Cadeau Journalier -->
                     <div class="card-panel">
                         <div class="panel-title">🎁 Cadeau Journalier</div>
                         <div class="panel-desc">Réclamez votre récompense gratuite chaque jour !</div>
-                        
+
                         <form onsubmit="claimDaily(event)">
                             <input type="text" id="claimEmailInput" class="input-field" placeholder="Votre e-mail / identifiant" required>
                             <input type="password" id="claimPasswordInput" class="input-field" placeholder="Votre mot de passe" required>
-                            
+
                             <div class="cf-turnstile" data-sitekey="0x4AAAAAADQhiAC09ulHVGUP" data-theme="light"></div>
-                            
+
                             <button type="submit" id="claimBtn" class="btn-claim">Réclamer ma récompense</button>
                         </form>
                         <div id="statusMessage"></div>
@@ -749,33 +868,134 @@
 
             </div>
 
-            <!-- NOUVEAU : État vide - ni "€ (Rimoft)" ni "Crédit" détecté dans le message -->
             <div id="emptyStateView" class="empty-state-view hide">
                 <div class="empty-bubble" id="emptyStateText"></div>
             </div>
 
         </div>
 
+        <!-- ============================================================
+             CRÉER UN COMPTE (fusionné, tous les id/fonctions préfixés "reg")
+             ============================================================ -->
+        <div id="registerView" style="display:none;">
+            <div class="app-logo">RIMOFT</div>
+            <div class="register-title" id="regRegisterTitle">Créer un compte</div>
+
+            <div id="regSuccessMessage" class="reg-success-message"></div>
+
+            <form id="regRegisterForm" onsubmit="regCreateAccount(event)">
+                <input type="text" id="regPseudoInput" class="input-field" placeholder="Pseudo Minecraft" required>
+                <input type="text" id="regPrenomInput" class="input-field" placeholder="Votre Prénom" required>
+                <input type="email" id="regEmailInput" class="input-field" placeholder="Adresse E-mail" required>
+                <input type="password" id="regPasswordInput" class="input-field" placeholder="Mot de passe" required>
+                <input type="password" id="regConfirmPasswordInput" class="input-field" placeholder="Confirmer le mot de passe" required>
+
+                <div class="cf-turnstile" data-sitekey="0x4AAAAAADQhiAC09ulHVGUP" data-theme="light"></div>
+
+                <div class="error-message" id="regErrorMessage"></div>
+
+                <button type="submit" id="regSubmitBtn" class="btn-submit">Créer mon compte</button>
+            </form>
+
+            <div id="regVerifySection">
+                <p class="reg-info-text">Un code a été envoyé à votre adresse e-mail. Entrez-le ci-dessous pour finaliser la création de votre compte.</p>
+                <input type="text" id="regCodeInput" class="input-field" placeholder="Code à 6 chiffres" maxlength="6">
+                <div class="error-message" id="regErrorMessageCode"></div>
+                <button id="regVerifyBtn" class="btn-submit" onclick="regVerifyCode()">Valider le code</button>
+            </div>
+
+            <div id="regValidateSection">
+                <p class="reg-info-text">Entrez le code reçu par e-mail pour valider votre compte.</p>
+                <input type="text" id="regCodeInputValidate" class="input-field" placeholder="Code à 6 chiffres" maxlength="6">
+                <div class="error-message" id="regErrorMessageValidate"></div>
+                <button id="regValidateBtn" class="btn-submit" onclick="regVerifyCodeValidate()">Valider le code</button>
+
+                <div class="links-group">
+                    <a href="https://sites.google.com/view/rimoft/se-connecter/cree-un-compte">Retour à l'inscription</a>
+                </div>
+            </div>
+
+            <div class="links-group" id="regBackLoginDiv">
+                Déjà un compte ? <a href="https://sites.google.com/view/rimoft/se-connecter">Se connecter</a>
+            </div>
+
+            <div class="links-group" id="regValidateAccountDiv">
+                Vous devez valider votre compte ? <a onclick="regShowValidateSection()">Entrer un code</a>
+            </div>
+
+            <div class="links-group" id="regAfterSuccess">
+                <a href="https://sites.google.com/view/rimoft/se-connecter">Retour à la connexion</a>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             MOT DE PASSE OUBLIÉ (fusionné, id/fonctions préfixés "res")
+             ============================================================ -->
+        <div id="resetView" style="display:none;">
+            <div class="app-logo">RIMOFT</div>
+            <h2 class="reset-title" id="resTitle">Mot de passe oublié ?</h2>
+            <p class="reset-desc" id="resDesc">Entrez votre adresse e-mail pour recevoir un lien de réinitialisation.</p>
+
+            <div id="resSuccessMessage" class="reset-success-message"></div>
+
+            <form id="resForm" onsubmit="resResetPassword(event)">
+                <input type="email" id="resEmailInput" class="input-field" placeholder="Votre adresse e-mail" required>
+
+                <div class="cf-turnstile" data-sitekey="0x4AAAAAADQhiAC09ulHVGUP" data-theme="light"></div>
+
+                <div class="error-message" id="resErrorMessage"></div>
+
+                <button type="submit" id="resSubmitBtn" class="btn-submit">Envoyer le lien</button>
+            </form>
+
+            <div class="back-login">
+                <a href="https://sites.google.com/view/rimoft/se-connecter">Retour à la connexion</a>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SUPPRIMER UN COMPTE (fusionné, id/fonctions préfixés "del")
+             ============================================================ -->
+        <div id="deleteView" style="display:none;">
+            <div class="app-logo">RIMOFT</div>
+            <h2 class="main-title" id="delMainTitle">Supprimer votre compte</h2>
+            <p class="intro-text" id="delIntroText">Entrez vos identifiants pour confirmer la suppression de votre compte.</p>
+
+            <div id="delSuccessMessage" class="del-success-message"></div>
+
+            <form id="delDeleteForm" onsubmit="delHandleDeleteAccount(event)">
+                <input type="email" id="delEmailInput" class="input-field" placeholder="Adresse e-mail" required>
+                <input type="password" id="delPasswordInput" class="input-field" placeholder="Mot de passe" required>
+
+                <div class="error-message" id="delErrorMessage"></div>
+
+                <div class="warning-text">⚠️ Attention : Cette action est irréversible.</div>
+
+                <button type="submit" id="delDeleteBtn" class="btn-delete">Supprimer définitivement</button>
+            </form>
+
+            <div class="back-login">
+                <a href="https://sites.google.com/view/rimoft/se-connecter">Retour à la connexion</a>
+            </div>
+        </div>
+
     </div>
 </div>
 
+<!-- ============================================================
+     SCRIPT D'ORIGINE DE LA PAGE DE CONNEXION - NE PAS MODIFIER
+     ============================================================ -->
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4aCiLNgicKkEB8xt9DtoGnnVzSigcdiwaXT_VA39Kxd5Uoi5bOUSFt7wZEzra8o-A5Q/exec";
     const CLAIM_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwe0Le4GSzBBaYcWkDYWL1RaCxg2O7D1fS3Fm7Z47mfAwto_3FjKE6QxnGgOuM95xUr/exec";
     const CONVERT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz5yY5cFRQHSmYPekifMd6sCYNxqfqGUMC-FxZls3k2wwpTBusBO8HDaL1d-lDGC48c3A/exec";
-    
-    /* URL du script Google de recharge */
     const RECHARGE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwnKeGwxXy1JxSiITF8InXGvgBBrmQ-fwE3IoQW9dP0h5uhkBQ3_p_frupp6N2XHcOK/exec";
-
-    /* NOUVEAU : URL du script qui vide le champ Notification */
     const CLEAR_NOTIF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYltroXMAKv0FZz5RVdV-uNNgFdZinFr63NZ86Yq8tzbPBbmK87PPYKRfVeUhvIiugLw/exec";
 
-    // Identifiants conservés en mémoire après connexion, réutilisés pour vider les notifications
     let currentUserEmail = "";
     let currentUserPassword = "";
     let notifCount = 0;
 
-    /* --- LOGIQUE DE RECHARGE DE CODE (Reprise exactement de votre script) --- */
     document.getElementById('code').addEventListener('input', function (e) {
         let value = e.target.value.replace(/\D/g, '');
         let formattedValue = '';
@@ -801,21 +1021,21 @@
         const password = document.getElementById('password').value;
         const code = document.getElementById('code').value.trim();
         const btnRecharge = document.getElementById('btnRecharge');
-        
+
         const turnstileWidget = document.querySelector('[name="cf-turnstile-response"]');
         const turnstileResponse = turnstileWidget ? turnstileWidget.value : "";
-        
+
         if (!turnstileResponse) {
             afficherMessage("Veuillez cocher et valider le système de sécurité (Captcha).");
             return;
         }
-        
+
         if (email.toLowerCase().endsWith('.rik')) {
             afficherMessage("Action impossible : Cette extension d'e-mail est réservée.");
             if (typeof turnstile !== 'undefined') turnstile.reset();
             return;
         }
-        
+
         if (!email || !password || code.replace(/-/g, '').length !== 16) {
             afficherMessage("Veuillez entrer votre email, mot de passe et un code valide.");
             if (typeof turnstile !== 'undefined') turnstile.reset();
@@ -832,11 +1052,11 @@
         .then(response => {
             if (response.success) {
                 afficherMessage(response.message);
-                
+
                 document.getElementById('email').disabled = true;
                 document.getElementById('password').disabled = true;
                 document.getElementById('code').disabled = true;
-                
+
                 btnRecharge.disabled = false;
                 btnRecharge.classList.add('active');
             } else {
@@ -862,7 +1082,7 @@
         const password = document.getElementById('password').value;
         const code = document.getElementById('code').value.trim();
         const btnRecharge = document.getElementById('btnRecharge');
-        
+
         afficherMessage("Application de la recharge...");
         btnRecharge.disabled = true;
         btnRecharge.classList.remove('active');
@@ -875,12 +1095,12 @@
         .then(response => {
             if (response.success) {
                 afficherMessage(response.message);
-                
+
                 document.getElementById('email').disabled = false;
                 document.getElementById('password').disabled = false;
                 document.getElementById('code').disabled = false;
-                document.getElementById('code').value = ""; 
-                document.getElementById('password').value = ""; 
+                document.getElementById('code').value = "";
+                document.getElementById('password').value = "";
                 resetBoutonRecharge();
             } else {
                 afficherMessage(response.message);
@@ -895,7 +1115,6 @@
         });
     }
 
-    /* --- GESTION DE LA CONNEXION PRINCIPALE --- */
     async function checkCredentials(event) {
         event.preventDefault();
 
@@ -914,17 +1133,14 @@
             const result = await response.json();
 
             if (result.status === "success") {
-                // NOUVEAU : on garde les identifiants pour pouvoir vider les notifications ensuite
                 currentUserEmail = email;
                 currentUserPassword = password;
 
                 parseAndRenderUserData(result.message);
 
-                // NOUVEAU : rendu du panneau de notifications (champ "notification" renvoyé par le script)
                 renderNotifications(result.notification || "");
                 closeNotifPanel();
-                
-                // Pré-remplir automatiquement tous les formulaires
+
                 document.getElementById("claimEmailInput").value = email;
                 document.getElementById("claimPasswordInput").value = password;
                 document.getElementById("convertEmailInput").value = email;
@@ -980,14 +1196,11 @@
         }
     }
 
-    /* --- NOUVEAU : GESTION DU PANNEAU DE NOTIFICATIONS --- */
     function toggleNotifPanel() {
         const panel = document.getElementById("notifPanel");
         const isOpening = !panel.classList.contains("open");
         panel.classList.toggle("open");
 
-        // On ne déclenche la suppression qu'une fois, à la première ouverture
-        // tant qu'il reste des notifications non vidées (notifCount > 0).
         if (isOpening && notifCount > 0) {
             hideNotifBadge();
             deleteNotificationsOnServer();
@@ -1010,9 +1223,7 @@
         fetch(CLEAR_NOTIF_SCRIPT_URL, {
             method: "POST",
             body: JSON.stringify({ email: currentUserEmail, password: currentUserPassword })
-        }).catch(() => {
-            // Échec silencieux : on ne bloque pas l'affichage du panneau pour ça
-        });
+        }).catch(() => {});
     }
 
     function renderNotifications(rawNotif) {
@@ -1026,7 +1237,6 @@
             return;
         }
 
-        // Chaque notification est précédée de "::" dans le champ Firestore
         const parts = rawNotif.split("::").map(s => s.trim()).filter(s => s.length > 0);
 
         if (parts.length === 0) {
@@ -1042,13 +1252,11 @@
         });
         container.innerHTML = html;
 
-        // NOUVEAU : mise à jour du badge rouge avec le nombre de notifications
         notifCount = parts.length;
         badge.innerText = notifCount > 9 ? "9+" : String(notifCount);
         badge.classList.remove("hide");
     }
 
-    /* --- LOGIQUE DU CONVERTISSEUR DE CRÉDITS --- */
     async function checkAndConvert(event) {
         event.preventDefault();
         const email = document.getElementById("convertEmailInput").value.trim();
@@ -1075,10 +1283,10 @@
         try {
             const response = await fetch(CONVERT_SCRIPT_URL, {
                 method: "POST",
-                body: JSON.stringify({ 
-                    email: email, 
-                    password: password, 
-                    amount: amountToTransfer 
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    amount: amountToTransfer
                 })
             });
 
@@ -1104,7 +1312,6 @@
         document.getElementById("convertErrorMessage").innerText = "";
     }
 
-    /* --- LOGIQUE DU CADEAU JOURNALIER --- */
     async function claimDaily(event) {
         event.preventDefault();
         const email = document.getElementById("claimEmailInput").value.trim();
@@ -1120,7 +1327,7 @@
         turnstileInputs.forEach(inp => {
             if (inp.value) turnstileResponse = inp.value;
         });
-        
+
         if (!turnstileResponse) {
             status.innerHTML = "<span class='error'>Veuillez valider le système de sécurité (Captcha).</span>";
             btn.disabled = false;
@@ -1139,9 +1346,9 @@
                 method: "POST",
                 body: JSON.stringify({ email: email, password: password })
             });
-            
+
             const result = await response.json();
-            
+
             if (result.status === "success") {
                 status.innerHTML = `<span class='success'>${result.message}</span>`;
             } else {
@@ -1152,16 +1359,15 @@
             status.innerHTML = "<span class='error'>Erreur de communication avec le serveur.</span>";
             btn.disabled = false;
         }
-        
+
         if (typeof turnstile !== 'undefined') turnstile.reset();
     }
 
-    /* --- ANALYSE ET AFFICHAGE DES DONNÉES UTILISATEUR --- */
     function parseCustomMessage(message) {
         const commandRegex = /\('\s*([^;]+)\s*;\s*(\d+)\s*'\)/g;
         let commands = [];
         let match;
-        
+
         while ((match = commandRegex.exec(message)) !== null) {
             commands.push({
                 type: match[1].trim(),
@@ -1226,8 +1432,6 @@
         const rimoftMatch = rawMessage.match(/€\s*\(Rimoft\)\s*:\s*([\d\.]+[\s\S]*?)(?=\n|Crédit|::|$)/i);
         const creditMatch = rawMessage.match(/Crédit\s*:\s*([\d\.]+[\s\S]*?)(?=\n|::|€\s*\(Rimoft\)|$)/i);
 
-        // NOUVEAU : ni "€ (Rimoft)" ni "Crédit" détecté -> on affiche uniquement le message
-        // dans une bulle centrée, le reste du tableau de bord (header + onglets) reste masqué.
         if (!rimoftMatch && !creditMatch) {
             document.getElementById("bankHeader").classList.add("hide");
             document.getElementById("contentBody").classList.add("hide");
@@ -1287,6 +1491,407 @@
             document.getElementById("txList").innerHTML = txHtml;
         }
     }
+</script>
+
+<!-- ============================================================
+     SCRIPT "CRÉER UN COMPTE" (fusionné, préfixe REGISTER_/reg)
+     ============================================================ -->
+<script>
+    const REGISTER_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxN0w_-jiBv_YYZZ2HUcvbD4lz2UnvfLg-AsjCQr4Fne8UZGDubao_bdvfIERYQsH7png/exec";
+
+    function regResetState() {
+        document.getElementById("regRegisterForm").style.display = "";
+        document.getElementById("regVerifySection").style.display = "none";
+        document.getElementById("regValidateSection").style.display = "none";
+        document.getElementById("regAfterSuccess").style.display = "none";
+        document.getElementById("regBackLoginDiv").style.display = "";
+        document.getElementById("regValidateAccountDiv").style.display = "";
+        document.getElementById("regRegisterTitle").style.display = "";
+        document.getElementById("regRegisterTitle").innerText = "Créer un compte";
+        document.getElementById("regSuccessMessage").style.display = "none";
+        document.getElementById("regErrorMessage").innerText = "";
+        const btn = document.getElementById("regSubmitBtn");
+        btn.disabled = false;
+        btn.innerText = "Créer mon compte";
+    }
+
+    window.regShowValidateSection = function() {
+        document.getElementById("regRegisterForm").style.display = "none";
+        document.getElementById("regVerifySection").style.display = "none";
+        document.getElementById("regValidateSection").style.display = "block";
+        document.getElementById("regBackLoginDiv").style.display = "none";
+        document.getElementById("regValidateAccountDiv").style.display = "none";
+        document.getElementById("regRegisterTitle").innerText = "Valider votre compte";
+    }
+
+    window.regCreateAccount = async function(event) {
+        event.preventDefault();
+        const btn = document.getElementById("regSubmitBtn");
+        const errDiv = document.getElementById("regErrorMessage");
+
+        const pseudo = document.getElementById("regPseudoInput").value;
+        const prenom = document.getElementById("regPrenomInput").value;
+        const email = document.getElementById("regEmailInput").value.trim();
+        const pass = document.getElementById("regPasswordInput").value;
+        const confirmPass = document.getElementById("regConfirmPasswordInput").value;
+
+        errDiv.innerText = "";
+
+        const turnstileWidget = document.querySelector('#registerView [name="cf-turnstile-response"]');
+        const turnstileResponse = turnstileWidget ? turnstileWidget.value : "";
+
+        if (!turnstileResponse) {
+            errDiv.innerText = "Veuillez cocher et valider le système de sécurité (Captcha).";
+            return;
+        }
+
+        if (pseudo.includes(" ") || prenom.includes(" ")) {
+            errDiv.innerText = "Le Pseudo Minecraft et le Prénom ne doivent pas contenir d'espace.";
+            return;
+        }
+
+        const checkLower = (pseudo + prenom).toLowerCase();
+        if (checkLower.includes("crédit") || checkLower.includes("credit") || checkLower.includes("|") || checkLower.includes("€") ||
+            checkLower.includes("(") || checkLower.includes(")") || checkLower.includes(":") ||
+            checkLower.includes(";") || checkLower.includes("'")) {
+            errDiv.innerText = "Le Pseudo Minecraft ou Prénom contient des caractères interdits.";
+            return;
+        }
+
+        if (email.toLowerCase().endsWith(".rik")) {
+            errDiv.innerText = "Action impossible : Cette extension d'e-mail est réservée.";
+            return;
+        }
+
+        if (pass !== confirmPass) {
+            errDiv.innerText = "Les mots de passe ne correspondent pas !";
+            return;
+        }
+        if (pass.length < 6) {
+            errDiv.innerText = "Le mot de passe doit faire au moins 6 caractères.";
+            return;
+        }
+
+        try {
+            btn.disabled = true;
+            btn.innerText = "Envoi du code...";
+
+            const response = await fetch(REGISTER_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    action: "sendCode",
+                    pseudo: pseudo,
+                    prenom: prenom,
+                    email: email,
+                    password: pass,
+                    confirmPassword: confirmPass
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.status === "limitEmail") {
+                document.getElementById("regRegisterForm").style.display = "none";
+                document.getElementById("regValidateAccountDiv").style.display = "none";
+                document.getElementById("regBackLoginDiv").style.display = "none";
+                document.getElementById("regRegisterTitle").style.display = "none";
+                const succDiv = document.getElementById("regSuccessMessage");
+                succDiv.style.color = "#d97706";
+                succDiv.innerText = result.message;
+                succDiv.style.display = "block";
+                document.getElementById("regAfterSuccess").style.display = "block";
+            } else if (result.status === "success") {
+                document.getElementById("regRegisterForm").style.display = "none";
+                document.getElementById("regValidateAccountDiv").style.display = "none";
+                document.getElementById("regVerifySection").style.display = "block";
+                document.getElementById("regRegisterTitle").innerText = "Vérification de l'e-mail";
+            } else {
+                errDiv.innerText = result.message;
+                btn.disabled = false;
+                btn.innerText = "Créer mon compte";
+                if (typeof turnstile !== 'undefined') turnstile.reset();
+            }
+
+        } catch (error) {
+            errDiv.innerText = "Erreur de communication avec le serveur.";
+            btn.disabled = false;
+            btn.innerText = "Créer mon compte";
+            if (typeof turnstile !== 'undefined') turnstile.reset();
+        }
+    };
+
+    window.regVerifyCode = async function() {
+        const btn = document.getElementById("regVerifyBtn");
+        const errDiv = document.getElementById("regErrorMessageCode");
+        const code = document.getElementById("regCodeInput").value.trim();
+        errDiv.innerText = "";
+
+        if (!code || code.length !== 6) {
+            errDiv.innerText = "Veuillez entrer un code à 6 chiffres.";
+            return;
+        }
+
+        try {
+            btn.disabled = true;
+            btn.innerText = "Vérification...";
+
+            const response = await fetch(REGISTER_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "verifyCode", code: code })
+            });
+
+            const result = await response.json();
+
+            if (result.status === "success") {
+                document.getElementById("regVerifySection").style.display = "none";
+                document.getElementById("regRegisterTitle").style.display = "none";
+                document.getElementById("regBackLoginDiv").style.display = "none";
+                document.getElementById("regValidateAccountDiv").style.display = "none";
+                const succDiv = document.getElementById("regSuccessMessage");
+                succDiv.innerText = result.message;
+                succDiv.style.display = "block";
+                document.getElementById("regAfterSuccess").style.display = "block";
+            } else {
+                errDiv.innerText = result.message;
+                btn.disabled = false;
+                btn.innerText = "Valider le code";
+            }
+
+        } catch (error) {
+            errDiv.innerText = "Erreur de communication avec le serveur.";
+            btn.disabled = false;
+            btn.innerText = "Valider le code";
+        }
+    };
+
+    window.regVerifyCodeValidate = async function() {
+        const btn = document.getElementById("regValidateBtn");
+        const errDiv = document.getElementById("regErrorMessageValidate");
+        const code = document.getElementById("regCodeInputValidate").value.trim();
+        errDiv.innerText = "";
+
+        if (!code || code.length !== 6) {
+            errDiv.innerText = "Veuillez entrer un code à 6 chiffres.";
+            return;
+        }
+
+        try {
+            btn.disabled = true;
+            btn.innerText = "Vérification...";
+
+            const response = await fetch(REGISTER_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "verifyCode", code: code })
+            });
+
+            const result = await response.json();
+
+            if (result.status === "success") {
+                document.getElementById("regValidateSection").style.display = "none";
+                document.getElementById("regRegisterTitle").style.display = "none";
+                document.getElementById("regBackLoginDiv").style.display = "none";
+                document.getElementById("regValidateAccountDiv").style.display = "none";
+                const succDiv = document.getElementById("regSuccessMessage");
+                succDiv.innerText = result.message;
+                succDiv.style.display = "block";
+                document.getElementById("regAfterSuccess").style.display = "block";
+            } else {
+                errDiv.innerText = result.message;
+                btn.disabled = false;
+                btn.innerText = "Valider le code";
+            }
+
+        } catch (error) {
+            errDiv.innerText = "Erreur de communication avec le serveur.";
+            btn.disabled = false;
+            btn.innerText = "Valider le code";
+        }
+    };
+</script>
+
+<!-- ============================================================
+     SCRIPT "MOT DE PASSE OUBLIÉ" (fusionné, préfixe RESET_/res)
+     ============================================================ -->
+<script>
+    const RESET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbf_MBFqX3oa5PMyd6OE3pXS91UzTYdN4ICrFGMVGZSHUTHIbicEZj3Ye1FfYrDMb4-Q/exec";
+
+    function resResetState() {
+        document.getElementById("resForm").style.display = "";
+        document.getElementById("resTitle").style.display = "";
+        document.getElementById("resDesc").style.display = "";
+        document.getElementById("resSuccessMessage").style.display = "none";
+        document.getElementById("resErrorMessage").innerText = "";
+        const btn = document.getElementById("resSubmitBtn");
+        btn.disabled = false;
+        btn.innerText = "Envoyer le lien";
+    }
+
+    window.resResetPassword = async function(event) {
+        event.preventDefault();
+        const btn = document.getElementById("resSubmitBtn");
+        const errDiv = document.getElementById("resErrorMessage");
+        const succDiv = document.getElementById("resSuccessMessage");
+        const email = document.getElementById("resEmailInput").value.trim();
+
+        errDiv.innerText = "";
+        succDiv.style.display = "none";
+
+        const turnstileWidget = document.querySelector('#resetView [name="cf-turnstile-response"]');
+        const turnstileResponse = turnstileWidget ? turnstileWidget.value : "";
+
+        if (!turnstileResponse) {
+            errDiv.innerText = "Veuillez cocher et valider le système de sécurité (Captcha).";
+            return;
+        }
+
+        if (email.toLowerCase().endsWith(".rik")) {
+            errDiv.innerText = "Action impossible : Cette extension d'e-mail est réservée.";
+            if (typeof turnstile !== 'undefined') turnstile.reset();
+            return;
+        }
+
+        try {
+            btn.disabled = true;
+            btn.innerText = "Vérification en cours...";
+
+            const response = await fetch(RESET_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ email: email })
+            });
+
+            const result = await response.json();
+
+            if (result.status === "success") {
+                document.getElementById("resForm").style.display = "none";
+                document.getElementById("resTitle").style.display = "none";
+                document.getElementById("resDesc").style.display = "none";
+
+                succDiv.innerHTML = result.message;
+                succDiv.style.display = "block";
+            } else {
+                errDiv.innerText = result.message;
+                btn.disabled = false;
+                btn.innerText = "Envoyer le lien";
+                if (typeof turnstile !== 'undefined') turnstile.reset();
+            }
+
+        } catch (error) {
+            errDiv.innerText = "Erreur de communication avec le serveur.";
+            btn.disabled = false;
+            btn.innerText = "Envoyer le lien";
+            if (typeof turnstile !== 'undefined') turnstile.reset();
+        }
+    };
+</script>
+
+<!-- ============================================================
+     SCRIPT "SUPPRIMER UN COMPTE" (fusionné, préfixe DELETE_/del)
+     ============================================================ -->
+<script>
+    const DELETE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwaDtr16iaqqexG8K0cPdL0uQdlR9dOiNvqIG8ceNSMXYnH4mKGZHmnkb7sU9bHFZn1gQ/exec";
+
+    function delResetState() {
+        document.getElementById("delDeleteForm").style.display = "";
+        document.getElementById("delIntroText").style.display = "";
+        document.getElementById("delMainTitle").style.display = "";
+        document.getElementById("delSuccessMessage").style.display = "none";
+        document.getElementById("delErrorMessage").innerText = "";
+        const btn = document.getElementById("delDeleteBtn");
+        btn.disabled = false;
+        btn.innerText = "Supprimer définitivement";
+    }
+
+    window.delHandleDeleteAccount = async function(event) {
+        event.preventDefault();
+        const btn = document.getElementById("delDeleteBtn");
+        const errDiv = document.getElementById("delErrorMessage");
+        const succDiv = document.getElementById("delSuccessMessage");
+        const email = document.getElementById("delEmailInput").value.trim();
+        const password = document.getElementById("delPasswordInput").value;
+
+        errDiv.innerText = "";
+
+        if (email.toLowerCase().endsWith(".rik")) {
+            errDiv.innerText = "Action impossible : Ce compte est protégé.";
+            return;
+        }
+
+        try {
+            btn.disabled = true;
+            btn.innerText = "Suppression en cours...";
+
+            const response = await fetch(DELETE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ email: email, password: password })
+            });
+
+            const result = await response.json();
+
+            if (result.status === "success") {
+                document.getElementById("delDeleteForm").style.display = "none";
+                document.getElementById("delIntroText").style.display = "none";
+                document.getElementById("delMainTitle").style.display = "none";
+
+                succDiv.innerText = result.message;
+                succDiv.style.display = "block";
+            } else {
+                errDiv.innerText = result.message;
+                btn.disabled = false;
+                btn.innerText = "Supprimer définitivement";
+            }
+
+        } catch (error) {
+            errDiv.innerText = "Erreur de communication avec le serveur de suppression.";
+            btn.disabled = false;
+            btn.innerText = "Supprimer définitivement";
+        }
+    };
+</script>
+
+<!-- ============================================================
+     NAVIGATION ENTRE LES VUES (nouveau, n'affecte pas le code
+     existant : intercepte simplement les liens pour afficher le
+     bon formulaire directement au lieu de changer de page)
+     ============================================================ -->
+<script>
+    (function() {
+        function rimoftShowView(name) {
+            var ids = ["loginView", "registerView", "resetView", "deleteView"];
+            ids.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.style.display = "none";
+            });
+            if (name === "register") {
+                if (typeof regResetState === "function") regResetState();
+                document.getElementById("registerView").style.display = "flex";
+            } else if (name === "reset") {
+                if (typeof resResetState === "function") resResetState();
+                document.getElementById("resetView").style.display = "flex";
+            } else if (name === "delete") {
+                if (typeof delResetState === "function") delResetState();
+                document.getElementById("deleteView").style.display = "flex";
+            } else {
+                document.getElementById("loginView").style.display = "flex";
+            }
+        }
+
+        function wireLinks() {
+            document.querySelectorAll("a[href]").forEach(function(a) {
+                var href = a.getAttribute("href") || "";
+                if (href.endsWith("/se-connecter/cree-un-compte")) {
+                    a.addEventListener("click", function(e) { e.preventDefault(); rimoftShowView("register"); });
+                } else if (href.endsWith("/se-connecter/reinitialise-le-mot-de-passe")) {
+                    a.addEventListener("click", function(e) { e.preventDefault(); rimoftShowView("reset"); });
+                } else if (href.endsWith("/se-connecter/supprimer-un-compte")) {
+                    a.addEventListener("click", function(e) { e.preventDefault(); rimoftShowView("delete"); });
+                } else if (href.endsWith("/se-connecter") || href.endsWith("/se-connecter/")) {
+                    a.addEventListener("click", function(e) { e.preventDefault(); rimoftShowView("login"); });
+                }
+            });
+        }
+
+        wireLinks();
+    })();
 </script>
 
 </body>

@@ -726,6 +726,67 @@
             font-weight: 700;
             line-height: 1.4;
         }
+
+        /* ============================================================
+           NOUVEAU : IBAN, ONGLETS "VIREMENT" ET "SÉCURITÉ", ET
+           TRANSACTIONS QUI PASSENT À LA LIGNE AU LIEU D'ÊTRE COUPÉES
+           ============================================================ */
+
+        /* 5 boutons d'onglets : ils passent sur deux lignes */
+        .action-buttons.wrap { flex-wrap: wrap; }
+        .action-buttons.wrap .btn-action { flex: 1 1 28%; }
+
+        /* ID d'utilisateur (IBAN) dans l'onglet Sécurité, un appui le copie */
+        .iban-card { cursor: pointer; }
+        .iban-value { font-size: 12px; font-weight: 700; color: #0f172a; word-break: break-all; line-height: 1.4; }
+        .iban-hint { display: block; margin-top: 4px; font-size: 10px; color: #64748b; }
+
+        /* Les lignes d'une transaction passent à la ligne si elles sont trop longues */
+        .tx-info .tx-wrap { white-space: normal; overflow: visible; text-overflow: clip; }
+        .tx-info .tx-iban { word-break: break-all; }
+
+        .btn-secondary {
+            width: 100%;
+            background: #f1f5f9;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 9px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: background 0.2s;
+        }
+        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-secondary:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+        .btn-secondary.is-on { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+
+        .settings-line { font-size: 11px; color: #334155; line-height: 1.5; }
+        .settings-line strong { color: #0f172a; }
+
+        .inactive-note {
+            margin-bottom: 8px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        /* Carte grisée et inaccessible tant que le compte n'est pas activé */
+        .panel-locked { opacity: 0.5; filter: grayscale(1); pointer-events: none; user-select: none; }
+
+        .bank-feedback {
+            min-height: 16px;
+            margin: 4px 0 8px 0;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
@@ -759,7 +820,9 @@
         </div>
 
         <!-- ============================================================
-             TABLEAU DE BORD - CODE D'ORIGINE, INCHANGÉ
+             TABLEAU DE BORD
+             NOUVEAU : ligne IBAN dans l'en-tête, 2 onglets en plus
+             (Virement, Sécurité) et leurs panneaux
              ============================================================ -->
         <div id="dashboardView" class="dashboard-view">
 
@@ -792,10 +855,12 @@
             </div>
 
             <div id="contentBody" class="content-body">
-                <div class="action-buttons">
+                <div class="action-buttons wrap">
                     <button id="btnCredit" class="btn-action active" onclick="switchTab('credit')">Crédit</button>
                     <button id="btnTx" class="btn-action" onclick="switchTab('transactions')">Transactions</button>
                     <button id="btnAdd" class="btn-action" onclick="switchTab('add')">Ajouter</button>
+                    <button id="btnTransfer" class="btn-action" onclick="switchTab('transfer')">Virement</button>
+                    <button id="btnSecurity" class="btn-action" onclick="switchTab('security')">Sécurité</button>
                 </div>
 
                 <div id="panelCredit" class="card-panel">
@@ -814,6 +879,9 @@
                 </div>
 
                 <div id="panelAdd" class="hide">
+
+                    <!-- NOUVEAU : note affichée si le compte n'est pas activé -->
+                    <div id="addInactive" class="inactive-note hide">Votre compte n'est pas activé : la recharge par code et le cadeau journalier sont indisponibles. Activez-le en jeu avec votre carte d'identité.</div>
 
                     <div class="card-panel">
                         <div class="panel-title">🔄 Convertisseur Rimoft</div>
@@ -834,7 +902,7 @@
                         </div>
                     </div>
 
-                    <div class="card-panel">
+                    <div id="cardRecharge" class="card-panel">
                         <div class="panel-title">💳 Recharge par Code</div>
                         <div class="panel-desc">Entrez votre code de recharge Rimoft (16 chiffres).</div>
 
@@ -849,7 +917,7 @@
                         <button id="btnRecharge" class="btn-recharge" onclick="rechargerCompte()" disabled>Recharger</button>
                     </div>
 
-                    <div class="card-panel">
+                    <div id="cardDaily" class="card-panel">
                         <div class="panel-title">🎁 Cadeau Journalier</div>
                         <div class="panel-desc">Réclamez votre récompense gratuite chaque jour !</div>
 
@@ -864,6 +932,63 @@
                         <div id="statusMessage"></div>
                     </div>
 
+                </div>
+
+                <!-- NOUVEAU : onglet Virement -->
+                <div id="panelTransfer" class="hide">
+                    <div id="transferInactive" class="inactive-note hide">Votre compte n'est pas activé : les virements sont indisponibles. Activez-le en jeu avec votre carte d'identité.</div>
+
+                    <div id="cardTransfer" class="card-panel">
+                        <div class="panel-title">💸 Virement vers un compte</div>
+                        <div class="panel-desc">Envoyez de l'argent à un autre compte Rimoft avec son IBAN. De 1 € à 10 000 €, sans frais.</div>
+
+                        <input type="text" id="transferIbanInput" class="input-field" placeholder="IBAN du destinataire" autocomplete="off" onfocus="clearTransferMessage()">
+                        <input type="number" id="transferAmountInput" class="input-field" placeholder="Montant (de 1 à 10 000 €)" step="0.01" min="1" max="10000" onfocus="clearTransferMessage()">
+
+                        <div id="transferMessage" class="bank-feedback"></div>
+                        <button type="button" id="transferBtn" class="btn-convert" onclick="sendTransfer()">ENVOYER LE VIREMENT</button>
+                    </div>
+                </div>
+
+                <!-- NOUVEAU : onglet Sécurité -->
+                <div id="panelSecurity" class="hide">
+
+                    <div id="securityInactive" class="inactive-note hide">Votre compte n'est pas activé : le plafond, le verrou et les virements reçus sont indisponibles. Activez-le en jeu avec votre carte d'identité.</div>
+
+                    <!-- NOUVEAU : ID d'utilisateur (IBAN), un appui le copie -->
+                    <div id="ibanLine" class="card-panel iban-card hide" onclick="copyIban()">
+                        <div class="panel-title">🆔 Votre IBAN</div>
+                        <div id="ibanValue" class="iban-value">—</div>
+                        <span id="ibanHint" class="iban-hint">Appuyer pour copier</span>
+                    </div>
+
+                    <div class="card-panel">
+                        <div class="panel-title">🛡️ Statut du compte</div>
+                        <div id="securityStatus" class="settings-line">—</div>
+                    </div>
+
+                    <div id="cardPlafond" class="card-panel">
+                        <div class="panel-title">📊 Plafond de dépense journalier</div>
+                        <div id="plafondInfo" class="panel-desc">—</div>
+                        <input type="number" id="plafondInput" class="input-field" placeholder="Nouveau plafond (€ par jour)" step="0.01" min="0.01" onfocus="clearSecurityMessage()">
+                        <button type="button" id="plafondSetBtn" class="btn-convert" onclick="definirPlafond()">DÉFINIR LE PLAFOND</button>
+                        <button type="button" id="plafondRemoveBtn" class="btn-secondary" onclick="supprimerPlafond()">Supprimer le plafond</button>
+                        <button type="button" id="depensesResetBtn" class="btn-secondary" onclick="reinitialiserDepenses()">Remettre les dépenses du jour à zéro</button>
+                    </div>
+
+                    <div id="cardVerrou" class="card-panel">
+                        <div class="panel-title">🔒 Verrouillage des dépenses</div>
+                        <div class="panel-desc">Verrouillé, votre compte ne peut plus faire de retrait, de dépôt ni de virement (envoyé ou reçu).</div>
+                        <button type="button" id="verrouBtn" class="btn-secondary" onclick="basculerVerrou()">—</button>
+                    </div>
+
+                    <div id="cardVirements" class="card-panel">
+                        <div class="panel-title">📥 Virements reçus</div>
+                        <div class="panel-desc">Choisissez si les autres comptes peuvent vous envoyer de l'argent.</div>
+                        <button type="button" id="virementsBtn" class="btn-secondary" onclick="basculerVirements()">—</button>
+                    </div>
+
+                    <div id="securityMessage" class="bank-feedback"></div>
                 </div>
 
             </div>
@@ -983,7 +1108,8 @@
 </div>
 
 <!-- ============================================================
-     SCRIPT D'ORIGINE DE LA PAGE DE CONNEXION - NE PAS MODIFIER
+     SCRIPT D'ORIGINE DE LA PAGE DE CONNEXION
+     (les changements sont repérés par le mot NOUVEAU)
      ============================================================ -->
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4aCiLNgicKkEB8xt9DtoGnnVzSigcdiwaXT_VA39Kxd5Uoi5bOUSFt7wZEzra8o-A5Q/exec";
@@ -991,6 +1117,9 @@
     const CONVERT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz5yY5cFRQHSmYPekifMd6sCYNxqfqGUMC-FxZls3k2wwpTBusBO8HDaL1d-lDGC48c3A/exec";
     const RECHARGE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwnKeGwxXy1JxSiITF8InXGvgBBrmQ-fwE3IoQW9dP0h5uhkBQ3_p_frupp6N2XHcOK/exec";
     const CLEAR_NOTIF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYltroXMAKv0FZz5RVdV-uNNgFdZinFr63NZ86Yq8tzbPBbmK87PPYKRfVeUhvIiugLw/exec";
+
+    // NOUVEAU : URL du script Google "7-NOUVEAU-banque" (à coller après son déploiement)
+    const BANQUE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5hwXIQITxEkiSZHQUhpU_bwON2VYXzZiwQI5qc8vWmUPeaa9PT7YNkmEBu3E9P-E6/exec";
 
     let currentUserEmail = "";
     let currentUserPassword = "";
@@ -1017,6 +1146,7 @@
     }
 
     function verifierCode() {
+        if (compteInactif()) return;   // NOUVEAU : compte non activé, aucune requête
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
         const code = document.getElementById('code').value.trim();
@@ -1078,6 +1208,7 @@
     }
 
     function rechargerCompte() {
+        if (compteInactif()) return;   // NOUVEAU : compte non activé, aucune requête
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
         const code = document.getElementById('code').value.trim();
@@ -1141,6 +1272,9 @@
                 renderNotifications(result.notification || "");
                 closeNotifPanel();
 
+                // NOUVEAU : IBAN et état du compte (activation, plafond, verrou, virements)
+                renderBankInfo(result);
+
                 document.getElementById("claimEmailInput").value = email;
                 document.getElementById("claimPasswordInput").value = password;
                 document.getElementById("convertEmailInput").value = email;
@@ -1167,22 +1301,31 @@
         document.getElementById("errorMessage").innerText = "";
     }
 
+    // NOUVEAU : gère maintenant 5 onglets (Crédit, Transactions, Ajouter, Virement, Sécurité)
     function switchTab(tab) {
         const btnCredit = document.getElementById("btnCredit");
         const btnTx = document.getElementById("btnTx");
         const btnAdd = document.getElementById("btnAdd");
+        const btnTransfer = document.getElementById("btnTransfer");
+        const btnSecurity = document.getElementById("btnSecurity");
 
         const panelCredit = document.getElementById("panelCredit");
         const panelTx = document.getElementById("panelTx");
         const panelAdd = document.getElementById("panelAdd");
+        const panelTransfer = document.getElementById("panelTransfer");
+        const panelSecurity = document.getElementById("panelSecurity");
 
         btnCredit.classList.remove('active');
         btnTx.classList.remove('active');
         btnAdd.classList.remove('active');
+        btnTransfer.classList.remove('active');
+        btnSecurity.classList.remove('active');
 
         panelCredit.classList.add('hide');
         panelTx.classList.add('hide');
         panelAdd.classList.add('hide');
+        panelTransfer.classList.add('hide');
+        panelSecurity.classList.add('hide');
 
         if (tab === 'credit') {
             btnCredit.classList.add('active');
@@ -1193,6 +1336,12 @@
         } else if (tab === 'add') {
             btnAdd.classList.add('active');
             panelAdd.classList.remove('hide');
+        } else if (tab === 'transfer') {
+            btnTransfer.classList.add('active');
+            panelTransfer.classList.remove('hide');
+        } else if (tab === 'security') {
+            btnSecurity.classList.add('active');
+            panelSecurity.classList.remove('hide');
         }
     }
 
@@ -1314,6 +1463,7 @@
 
     async function claimDaily(event) {
         event.preventDefault();
+        if (compteInactif()) return;   // NOUVEAU : compte non activé, aucune requête
         const email = document.getElementById("claimEmailInput").value.trim();
         const password = document.getElementById("claimPasswordInput").value;
         const btn = document.getElementById("claimBtn");
@@ -1471,16 +1621,23 @@
             const heure = parseCustomMessage(txMatch[2].trim());
             const ancienSolde = parseCustomMessage(txMatch[3].trim());
             const montantVal = parseCustomMessage(txMatch[4].trim());
-            const pseudo = parseCustomMessage(txMatch[5].trim());
+
+            // NOUVEAU : une ligne qui commence par "VC|" est un virement entre comptes :
+            // on affiche l'IBAN de l'autre compte à la place du pseudo.
+            const dernierChamp = txMatch[5].trim();
+            const estVirementCompte = dernierChamp.indexOf("VC|") === 0;
+            const pseudo = parseCustomMessage(estVirementCompte ? dernierChamp.substring(3) : dernierChamp);
+            const libelle = estVirementCompte ? "Virement Compte" : "Virement Rimoft";
 
             const isPositive = txMatch[4].includes('+');
             const colorClass = isPositive ? 'tx-plus' : 'tx-minus';
 
+            // NOUVEAU : classes tx-wrap / tx-iban = le texte passe à la ligne au lieu d'être coupé par "..."
             txHtml += `
                 <div class="transaction-item">
                     <div class="tx-info">
-                        <span class="tx-title">${pseudo} • Virement Rimoft</span>
-                        <span class="tx-date">${ancienSolde} • ${jour} • ${heure}</span>
+                        <span class="tx-title tx-wrap${estVirementCompte ? ' tx-iban' : ''}">${pseudo} • ${libelle}</span>
+                        <span class="tx-date tx-wrap">${ancienSolde} • ${jour} • ${heure}</span>
                     </div>
                     <div class="tx-amount ${colorClass}">${montantVal}</div>
                 </div>
@@ -1490,6 +1647,271 @@
         if (txHtml !== "") {
             document.getElementById("txList").innerHTML = txHtml;
         }
+    }
+
+    // ============================================================
+    // NOUVEAU : IBAN, VIREMENTS ET SÉCURITÉ DU COMPTE
+    // ============================================================
+    let bankState = null;   // activation, plafond, verrou, virements acceptés (envoyés par les scripts)
+
+    function formatEuro(n) {
+        return Number(n).toFixed(2);
+    }
+
+    // Vrai seulement si on SAIT que le compte n'est pas activé (état reçu à la connexion)
+    function compteInactif() {
+        return !!bankState && !bankState.compteActive;
+    }
+
+    // Grise une carte et bloque tout ce qu'elle contient. Quand on la débloque,
+    // chaque bouton et champ retrouve l'état qu'il avait avant.
+    function setPanelLocked(id, locked) {
+        const panel = document.getElementById(id);
+        if (!panel) return;
+        panel.classList.toggle("panel-locked", locked);
+        if (locked) { panel.setAttribute("inert", ""); } else { panel.removeAttribute("inert"); }
+        panel.querySelectorAll("input, button").forEach(function (el) {
+            if (locked) {
+                if (el.dataset.prevDisabled === undefined) el.dataset.prevDisabled = el.disabled ? "1" : "0";
+                el.disabled = true;
+            } else if (el.dataset.prevDisabled !== undefined) {
+                el.disabled = (el.dataset.prevDisabled === "1");
+                delete el.dataset.prevDisabled;
+            }
+        });
+    }
+
+    // Onglet Ajouter : recharge par code et cadeau journalier grisés si le compte n'est pas activé
+    // (le convertisseur reste accessible, il ne dépend pas de l'activation)
+    function renderAccessLocks() {
+        const inactif = compteInactif();
+        setPanelLocked("cardRecharge", inactif);
+        setPanelLocked("cardDaily", inactif);
+        document.getElementById("addInactive").classList.toggle("hide", !inactif);
+    }
+
+    // Appelée après la connexion : affiche l'IBAN et l'état du compte
+    function renderBankInfo(result) {
+        const ibanLine = document.getElementById("ibanLine");
+        if (result.iban) {
+            document.getElementById("ibanValue").innerText = result.iban;
+            ibanLine.classList.remove("hide");
+        } else {
+            ibanLine.classList.add("hide");
+        }
+        bankState = result.parametres || null;
+        renderSecurity();
+    }
+
+    function copyIban() {
+        const texte = document.getElementById("ibanValue").innerText;
+        if (!texte || texte === "—") return;
+        const hint = document.getElementById("ibanHint");
+        const fait = function () {
+            hint.innerText = "IBAN copié !";
+            setTimeout(function () { hint.innerText = "Appuyer pour copier"; }, 1500);
+        };
+        const secours = function () {
+            const zone = document.createElement("textarea");
+            zone.value = texte;
+            zone.style.position = "fixed";
+            zone.style.opacity = "0";
+            document.body.appendChild(zone);
+            zone.select();
+            try { if (document.execCommand("copy")) fait(); } catch (e) {}
+            document.body.removeChild(zone);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(texte).then(fait).catch(secours);
+        } else {
+            secours();
+        }
+    }
+
+    // Recharge solde et historique après une opération (sans toucher aux notifications)
+    async function refreshAccount() {
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ email: currentUserEmail, password: currentUserPassword })
+            });
+            const result = await response.json();
+            if (result.status === "success") {
+                parseAndRenderUserData(result.message);
+                renderBankInfo(result);
+            }
+        } catch (e) {}
+    }
+
+    // Envoie une demande au script banque avec l'identité du joueur connecté
+    async function callBanque(donnees) {
+        if (!bankState || !bankState.compteActive) {
+            return { status: "error", message: "Votre compte n'est pas activé. Activez-le en jeu avec votre carte d'identité." };
+        }
+        if (BANQUE_SCRIPT_URL.indexOf("COLLE_ICI") === 0) {
+            return { status: "error", message: "La banque n'est pas encore configurée." };
+        }
+        try {
+            const response = await fetch(BANQUE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(Object.assign({ email: currentUserEmail, password: currentUserPassword }, donnees))
+            });
+            return await response.json();
+        } catch (e) {
+            return { status: "error", message: "Erreur de communication avec le serveur." };
+        }
+    }
+
+    function showFeedback(id, texte, ok) {
+        const zone = document.getElementById(id);
+        zone.innerText = texte;
+        zone.style.color = ok ? "#16a34a" : "#ef4444";
+    }
+
+    // ---------- Onglet Virement ----------
+    function clearTransferMessage() {
+        document.getElementById("transferMessage").innerText = "";
+    }
+
+    async function sendTransfer() {
+        const iban = document.getElementById("transferIbanInput").value.trim();
+        const montantTexte = document.getElementById("transferAmountInput").value.trim();
+        const montant = parseFloat(montantTexte);
+        const btn = document.getElementById("transferBtn");
+
+        if (!iban) { showFeedback("transferMessage", "Entrez l'IBAN du destinataire.", false); return; }
+        if (!/^\d+(\.\d{1,2})?$/.test(montantTexte)) {
+            showFeedback("transferMessage", "Le montant doit être un nombre, avec 2 chiffres maximum après la virgule.", false);
+            return;
+        }
+        if (isNaN(montant) || montant < 1 || montant > 10000) {
+            showFeedback("transferMessage", "Le montant doit être compris entre 1 € et 10 000 €.", false);
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Envoi en cours...";
+        showFeedback("transferMessage", "", true);
+
+        const result = await callBanque({ action: "virement", iban: iban, montant: montant });
+
+        if (result.status === "success") {
+            showFeedback("transferMessage", result.message, true);
+            document.getElementById("transferIbanInput").value = "";
+            document.getElementById("transferAmountInput").value = "";
+            if (result.parametres) { bankState = result.parametres; renderSecurity(); }
+            await refreshAccount();
+        } else {
+            showFeedback("transferMessage", result.message, false);
+        }
+
+        btn.disabled = false;
+        btn.innerText = "ENVOYER LE VIREMENT";
+    }
+
+    // ---------- Onglet Sécurité ----------
+    function clearSecurityMessage() {
+        document.getElementById("securityMessage").innerText = "";
+    }
+
+    // Affiche l'état du compte et active ou désactive les boutons
+    function renderSecurity() {
+        const etat = bankState;
+        const inactif = !etat || !etat.compteActive;
+
+        renderAccessLocks();
+
+        // Notes orange en haut des onglets (seulement si on sait que le compte n'est pas activé)
+        const noteVisible = compteInactif();
+        document.getElementById("securityInactive").classList.toggle("hide", !noteVisible);
+        document.getElementById("transferInactive").classList.toggle("hide", !noteVisible);
+
+        // Cartes grisées et inaccessibles tant que le compte n'est pas activé
+        ["cardTransfer", "cardPlafond", "cardVerrou", "cardVirements"].forEach(function (id) {
+            setPanelLocked(id, inactif);
+        });
+
+        if (!etat) {
+            document.getElementById("securityStatus").innerHTML = "Informations du compte indisponibles.";
+            document.getElementById("plafondInfo").innerText = "—";
+            document.getElementById("verrouBtn").innerText = "—";
+            document.getElementById("virementsBtn").innerText = "—";
+            return;
+        }
+
+        const type = etat.estEntreprise ? "Compte entreprise" : "Compte personnel";
+        document.getElementById("securityStatus").innerHTML =
+            "<strong>" + type + "</strong> : " + (etat.compteActive ? "activé ✅" : "non activé");
+
+        const depense = Number(etat.depensesDuJour || 0);
+        if (etat.plafondDepense === null || etat.plafondDepense === undefined) {
+            document.getElementById("plafondInfo").innerText =
+                "Aucun plafond défini. Dépensé aujourd'hui : " + formatEuro(depense) + " €.";
+        } else {
+            const reste = Math.max(0, Number(etat.plafondDepense) - depense);
+            document.getElementById("plafondInfo").innerText =
+                "Plafond : " + formatEuro(etat.plafondDepense) + " € par jour. Dépensé aujourd'hui : " +
+                formatEuro(depense) + " €. Il vous reste " + formatEuro(reste) + " €.";
+        }
+
+        const verrou = document.getElementById("verrouBtn");
+        verrou.innerText = etat.depensesVerrouillees ? "🔓 Déverrouiller les dépenses" : "🔒 Verrouiller les dépenses";
+        verrou.classList.toggle("is-on", !!etat.depensesVerrouillees);
+
+        const virements = document.getElementById("virementsBtn");
+        virements.innerText = etat.virementsAcceptes ? "Refuser les virements reçus" : "Accepter les virements reçus";
+        virements.classList.toggle("is-on", !etat.virementsAcceptes);
+    }
+
+    // Envoie une action de réglage et met la page à jour avec la réponse
+    async function actionSecurite(donnees, bouton) {
+        bouton.disabled = true;
+        showFeedback("securityMessage", "", true);
+        const result = await callBanque(donnees);
+        bouton.disabled = false;
+        if (result.status === "success") {
+            showFeedback("securityMessage", result.message, true);
+            if (result.parametres) bankState = result.parametres;
+        } else {
+            showFeedback("securityMessage", result.message, false);
+            if (bankState && result.message && result.message.indexOf("n'est pas activé") !== -1) {
+                bankState.compteActive = false;
+            }
+        }
+        renderSecurity();
+    }
+
+    function definirPlafond() {
+        const montantTexte = document.getElementById("plafondInput").value.trim();
+        const montant = parseFloat(montantTexte);
+        if (isNaN(montant) || montant <= 0) {
+            showFeedback("securityMessage", "Entrez un plafond supérieur à 0 €.", false);
+            return;
+        }
+        if (!/^\d+(\.\d{1,2})?$/.test(montantTexte)) {
+            showFeedback("securityMessage", "Le plafond doit avoir 2 chiffres maximum après la virgule.", false);
+            return;
+        }
+        actionSecurite({ action: "plafond", montant: montant }, document.getElementById("plafondSetBtn"))
+            .then(function () { document.getElementById("plafondInput").value = ""; });
+    }
+
+    function supprimerPlafond() {
+        actionSecurite({ action: "supprimerPlafond" }, document.getElementById("plafondRemoveBtn"));
+    }
+
+    function reinitialiserDepenses() {
+        actionSecurite({ action: "reinitialiserDepenses" }, document.getElementById("depensesResetBtn"));
+    }
+
+    function basculerVerrou() {
+        if (!bankState) return;
+        actionSecurite({ action: "verrou", valeur: !bankState.depensesVerrouillees }, document.getElementById("verrouBtn"));
+    }
+
+    function basculerVirements() {
+        if (!bankState) return;
+        actionSecurite({ action: "virementsAcceptes", valeur: !bankState.virementsAcceptes }, document.getElementById("virementsBtn"));
     }
 </script>
 

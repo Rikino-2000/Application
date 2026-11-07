@@ -938,6 +938,9 @@
                 <div id="panelTransfer" class="hide">
                     <div id="transferInactive" class="inactive-note hide">Votre compte n'est pas activé : les virements sont indisponibles. Activez-le en jeu avec votre carte d'identité.</div>
 
+                    <!-- NOUVEAU : note affichée quand les dépenses sont verrouillées -->
+                    <div id="transferLocked" class="inactive-note hide">Vos dépenses sont verrouillées : les virements sont indisponibles. Déverrouillez-les dans l'onglet Sécurité.</div>
+
                     <div id="cardTransfer" class="card-panel">
                         <div class="panel-title">💸 Virement vers un compte</div>
                         <div class="panel-desc">Envoyez de l'argent à un autre compte Rimoft avec son IBAN. De 1 € à 10 000 €, sans frais.</div>
@@ -1779,6 +1782,10 @@
         const montant = parseFloat(montantTexte);
         const btn = document.getElementById("transferBtn");
 
+        if (bankState && bankState.depensesVerrouillees) {
+            showFeedback("transferMessage", "Vos dépenses sont verrouillées : aucun virement possible.", false);
+            return;
+        }
         if (!iban) { showFeedback("transferMessage", "Entrez l'IBAN du destinataire.", false); return; }
         if (!/^\d+(\.\d{1,2})?$/.test(montantTexte)) {
             showFeedback("transferMessage", "Le montant doit être un nombre, avec 2 chiffres maximum après la virgule.", false);
@@ -1827,9 +1834,16 @@
         document.getElementById("transferInactive").classList.toggle("hide", !noteVisible);
 
         // Cartes grisées et inaccessibles tant que le compte n'est pas activé
-        ["cardTransfer", "cardPlafond", "cardVerrou", "cardVirements"].forEach(function (id) {
+        ["cardPlafond", "cardVerrou", "cardVirements"].forEach(function (id) {
             setPanelLocked(id, inactif);
         });
+
+        // Le formulaire de virement est aussi grisé quand les dépenses sont verrouillées
+        // (le virement serait refusé). Les cartes Verrouillage et Virements reçus restent
+        // accessibles, pour pouvoir déverrouiller.
+        const verrouille = !!etat && !!etat.compteActive && !!etat.depensesVerrouillees;
+        document.getElementById("transferLocked").classList.toggle("hide", !verrouille);
+        setPanelLocked("cardTransfer", inactif || verrouille);
 
         if (!etat) {
             document.getElementById("securityStatus").innerHTML = "Informations du compte indisponibles.";

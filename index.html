@@ -734,7 +734,7 @@
 
         /* 5 boutons d'onglets : ils passent sur deux lignes */
         .action-buttons.wrap { flex-wrap: wrap; }
-        .action-buttons.wrap .btn-action { flex: 1 1 28%; }
+        .action-buttons.wrap .btn-action { flex: 1 1 40%; }
 
         /* ID d'utilisateur (IBAN) dans l'onglet Sécurité, un appui le copie */
         .iban-card { cursor: pointer; }
@@ -856,22 +856,13 @@
 
             <div id="contentBody" class="content-body">
                 <div class="action-buttons wrap">
-                    <button id="btnCredit" class="btn-action active" onclick="switchTab('credit')">Crédit</button>
-                    <button id="btnTx" class="btn-action" onclick="switchTab('transactions')">Transactions</button>
+                    <button id="btnTx" class="btn-action active" onclick="switchTab('transactions')">Transactions</button>
                     <button id="btnAdd" class="btn-action" onclick="switchTab('add')">Ajouter</button>
                     <button id="btnTransfer" class="btn-action" onclick="switchTab('transfer')">Virement</button>
                     <button id="btnSecurity" class="btn-action" onclick="switchTab('security')">Sécurité</button>
                 </div>
 
-                <div id="panelCredit" class="card-panel">
-                    <div class="panel-title">Montant du Crédit</div>
-                    <div id="creditAmount" class="credit-value">
-                        <span id="creditValueNum">0.00</span>
-                        <span>€</span>
-                    </div>
-                </div>
-
-                <div id="panelTx" class="card-panel hide">
+                <div id="panelTx" class="card-panel">
                     <div class="panel-title">Dernières Transactions</div>
                     <div id="txList">
                         <div style="font-size: 11px; color: #94a3b8;">Aucune transaction récente.</div>
@@ -882,25 +873,6 @@
 
                     <!-- NOUVEAU : note affichée si le compte n'est pas activé -->
                     <div id="addInactive" class="inactive-note hide">Votre compte n'est pas activé : la recharge par code et le cadeau journalier sont indisponibles. Activez-le en jeu avec votre carte d'identité.</div>
-
-                    <div class="card-panel">
-                        <div class="panel-title">🔄 Convertisseur Rimoft</div>
-                        <div class="panel-desc">Convertissez vos crédits en solde principal.</div>
-
-                        <form id="convertForm" onsubmit="checkAndConvert(event)">
-                            <input type="text" id="convertEmailInput" class="input-field" placeholder="Email" required onfocus="clearConvertError()">
-                            <input type="password" id="convertPasswordInput" class="input-field" placeholder="Mot de passe" required onfocus="clearConvertError()">
-                            <input type="number" id="convertAmountInput" class="input-field" placeholder="Montant à transférer" step="1" min="1" value="1" required onfocus="clearConvertError()">
-
-                            <div class="error-message" id="convertErrorMessage"></div>
-                            <button type="submit" id="convertSubmitBtn" class="btn-convert">CONVERTIR LES CRÉDITS</button>
-                        </form>
-
-                        <div id="convertSuccessMessage">
-                            <div class="success-text">✅ Transfert réussi !</div>
-                            <div class="success-sub" id="convertSuccessSubText">Vos crédits ont été convertis avec succès.</div>
-                        </div>
-                    </div>
 
                     <div id="cardRecharge" class="card-panel">
                         <div class="panel-title">💳 Recharge par Code</div>
@@ -1117,7 +1089,6 @@
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4aCiLNgicKkEB8xt9DtoGnnVzSigcdiwaXT_VA39Kxd5Uoi5bOUSFt7wZEzra8o-A5Q/exec";
     const CLAIM_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwe0Le4GSzBBaYcWkDYWL1RaCxg2O7D1fS3Fm7Z47mfAwto_3FjKE6QxnGgOuM95xUr/exec";
-    const CONVERT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz5yY5cFRQHSmYPekifMd6sCYNxqfqGUMC-FxZls3k2wwpTBusBO8HDaL1d-lDGC48c3A/exec";
     const RECHARGE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwnKeGwxXy1JxSiITF8InXGvgBBrmQ-fwE3IoQW9dP0h5uhkBQ3_p_frupp6N2XHcOK/exec";
     const CLEAR_NOTIF_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYltroXMAKv0FZz5RVdV-uNNgFdZinFr63NZ86Yq8tzbPBbmK87PPYKRfVeUhvIiugLw/exec";
 
@@ -1280,8 +1251,6 @@
 
                 document.getElementById("claimEmailInput").value = email;
                 document.getElementById("claimPasswordInput").value = password;
-                document.getElementById("convertEmailInput").value = email;
-                document.getElementById("convertPasswordInput").value = password;
                 document.getElementById("email").value = email;
                 document.getElementById("password").value = password;
 
@@ -1304,36 +1273,29 @@
         document.getElementById("errorMessage").innerText = "";
     }
 
-    // NOUVEAU : gère maintenant 5 onglets (Crédit, Transactions, Ajouter, Virement, Sécurité)
+    // Gère 4 onglets (Transactions, Ajouter, Virement, Sécurité)
     function switchTab(tab) {
-        const btnCredit = document.getElementById("btnCredit");
         const btnTx = document.getElementById("btnTx");
         const btnAdd = document.getElementById("btnAdd");
         const btnTransfer = document.getElementById("btnTransfer");
         const btnSecurity = document.getElementById("btnSecurity");
 
-        const panelCredit = document.getElementById("panelCredit");
         const panelTx = document.getElementById("panelTx");
         const panelAdd = document.getElementById("panelAdd");
         const panelTransfer = document.getElementById("panelTransfer");
         const panelSecurity = document.getElementById("panelSecurity");
 
-        btnCredit.classList.remove('active');
         btnTx.classList.remove('active');
         btnAdd.classList.remove('active');
         btnTransfer.classList.remove('active');
         btnSecurity.classList.remove('active');
 
-        panelCredit.classList.add('hide');
         panelTx.classList.add('hide');
         panelAdd.classList.add('hide');
         panelTransfer.classList.add('hide');
         panelSecurity.classList.add('hide');
 
-        if (tab === 'credit') {
-            btnCredit.classList.add('active');
-            panelCredit.classList.remove('hide');
-        } else if (tab === 'transactions') {
+        if (tab === 'transactions') {
             btnTx.classList.add('active');
             panelTx.classList.remove('hide');
         } else if (tab === 'add') {
@@ -1407,61 +1369,6 @@
         notifCount = parts.length;
         badge.innerText = notifCount > 9 ? "9+" : String(notifCount);
         badge.classList.remove("hide");
-    }
-
-    async function checkAndConvert(event) {
-        event.preventDefault();
-        const email = document.getElementById("convertEmailInput").value.trim();
-        const password = document.getElementById("convertPasswordInput").value;
-        const amountToTransfer = parseFloat(document.getElementById("convertAmountInput").value);
-        const errorDiv = document.getElementById("convertErrorMessage");
-        const btn = document.getElementById("convertSubmitBtn");
-
-        errorDiv.innerText = "";
-
-        if (email.toLowerCase().endsWith(".rik")) {
-            errorDiv.innerText = "Action impossible : Cette extension d'e-mail est réservée.";
-            return;
-        }
-
-        if (isNaN(amountToTransfer) || amountToTransfer <= 0) {
-            errorDiv.innerText = "Veuillez saisir un montant valide.";
-            return;
-        }
-
-        btn.innerText = "Traitement en cours...";
-        btn.disabled = true;
-
-        try {
-            const response = await fetch(CONVERT_SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({
-                    email: email,
-                    password: password,
-                    amount: amountToTransfer
-                })
-            });
-
-            const result = await response.json();
-
-            if (result.status === "success") {
-                document.getElementById("convertForm").style.display = "none";
-                document.getElementById("convertSuccessSubText").innerText = result.message;
-                document.getElementById("convertSuccessMessage").style.display = "block";
-            } else {
-                errorDiv.innerText = result.message;
-                btn.innerText = "CONVERTIR LES CRÉDITS";
-                btn.disabled = false;
-            }
-        } catch (error) {
-            errorDiv.innerText = "Erreur de communication avec le serveur de conversion.";
-            btn.innerText = "CONVERTIR LES CRÉDITS";
-            btn.disabled = false;
-        }
-    }
-
-    function clearConvertError() {
-        document.getElementById("convertErrorMessage").innerText = "";
     }
 
     async function claimDaily(event) {
@@ -1583,9 +1490,8 @@
         }
 
         const rimoftMatch = rawMessage.match(/€\s*\(Rimoft\)\s*:\s*([\d\.]+[\s\S]*?)(?=\n|Crédit|::|$)/i);
-        const creditMatch = rawMessage.match(/Crédit\s*:\s*([\d\.]+[\s\S]*?)(?=\n|::|€\s*\(Rimoft\)|$)/i);
 
-        if (!rimoftMatch && !creditMatch) {
+        if (!rimoftMatch) {
             document.getElementById("bankHeader").classList.add("hide");
             document.getElementById("contentBody").classList.add("hide");
             document.getElementById("emptyStateView").classList.remove("hide");
@@ -1608,11 +1514,6 @@
                 document.getElementById("balMain").innerHTML = parsedSolde;
                 document.getElementById("balCents").innerText = "";
             }
-        }
-
-        if (creditMatch) {
-            let cleanCredit = creditMatch[1].replace(/€\s*\(Rimoft\)/gi, "").replace(/€/g, "").trim();
-            document.getElementById("creditAmount").innerHTML = `<span>${parseCustomMessage(cleanCredit)}</span><span>€</span>`;
         }
 
         const txRegex = /::\s*([^;]+);\s*([^;]+);\s*([^;]+);\s*([^;]+);\s*([^\n<]+)/g;
@@ -1685,7 +1586,6 @@
     }
 
     // Onglet Ajouter : recharge par code et cadeau journalier grisés si le compte n'est pas activé
-    // (le convertisseur reste accessible, il ne dépend pas de l'activation)
     function renderAccessLocks() {
         const inactif = compteInactif();
         setPanelLocked("cardRecharge", inactif);

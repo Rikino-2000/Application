@@ -796,6 +796,7 @@
             padding: 14px;
             color: #ffffff;
             cursor: pointer;
+            margin-bottom: 12px;
             box-shadow: 0 6px 12px -3px rgba(2, 132, 199, 0.35);
         }
         .prepaid-card-top {
@@ -815,7 +816,7 @@
             background: linear-gradient(135deg, #fde68a, #f59e0b);
         }
         .prepaid-card-balance { display: flex; align-items: baseline; }
-        .prepaid-card-hint { margin-top: 6px; font-size: 10px; color: #bae6fd; }
+        .prepaid-card-hint { margin-top: 8px; font-size: 10px; letter-spacing: 0.6px; color: #bae6fd; word-break: break-all; }
         .prepaid-iban {
             margin: 6px 2px 12px 2px;
             font-size: 10px;
@@ -2059,10 +2060,9 @@
                         '<span class="balance-cents">.' + parties[1] + '</span>' +
                         '<span class="balance-currency">EUR</span>' +
                     '</div>' +
-                    '<div class="prepaid-card-hint">Appuyer pour ouvrir</div>' +
-                '</div>' +
-                '<div class="prepaid-iban"></div>';
-            liste.querySelector(".prepaid-iban").innerText = "IBAN : " + prepayeState.iban;
+                    '<div class="prepaid-card-hint"></div>' +
+                '</div>';
+            liste.querySelector(".prepaid-card-hint").innerText = prepayeState.iban;
         }
 
         if (inactif) setPanelLocked("cardPrepaidManage", true);

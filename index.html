@@ -734,7 +734,7 @@
 
         /* 5 boutons d'onglets : ils passent sur deux lignes */
         .action-buttons.wrap { flex-wrap: wrap; }
-        .action-buttons.wrap .btn-action { flex: 1 1 40%; }
+        .action-buttons.wrap .btn-action { flex: 1 1 28%; }
 
         /* ID d'utilisateur (IBAN) dans l'onglet Sécurité, un appui le copie */
         .iban-card { cursor: pointer; }
@@ -787,6 +787,56 @@
             text-align: center;
             line-height: 1.4;
         }
+        /* ============================================================
+           NOUVEAU : COMPTE PRÉPAYÉ
+           ============================================================ */
+        .prepaid-card {
+            background: linear-gradient(135deg, #0284c7 0%, #1e40af 100%);
+            border-radius: 14px;
+            padding: 14px;
+            color: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 6px 12px -3px rgba(2, 132, 199, 0.35);
+        }
+        .prepaid-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: #bae6fd;
+            margin-bottom: 10px;
+        }
+        .prepaid-chip {
+            width: 26px;
+            height: 18px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #fde68a, #f59e0b);
+        }
+        .prepaid-card-balance { display: flex; align-items: baseline; }
+        .prepaid-card-hint { margin-top: 6px; font-size: 10px; color: #bae6fd; }
+        .prepaid-iban {
+            margin: 6px 2px 12px 2px;
+            font-size: 10px;
+            color: #64748b;
+            word-break: break-all;
+            text-align: center;
+        }
+        .pp-back {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 5px 9px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+        }
+        .pp-back:hover { background: rgba(255, 255, 255, 0.3); }
     </style>
 </head>
 <body>
@@ -860,6 +910,7 @@
                     <button id="btnAdd" class="btn-action" onclick="switchTab('add')">Ajouter</button>
                     <button id="btnTransfer" class="btn-action" onclick="switchTab('transfer')">Virement</button>
                     <button id="btnSecurity" class="btn-action" onclick="switchTab('security')">Sécurité</button>
+                    <button id="btnPrepaid" class="btn-action" onclick="switchTab('prepaid')">Prépayé</button>
                 </div>
 
                 <div id="panelTx" class="card-panel">
@@ -966,12 +1017,118 @@
                     <div id="securityMessage" class="bank-feedback"></div>
                 </div>
 
+                <!-- NOUVEAU : onglet Prépayé -->
+                <div id="panelPrepaid" class="hide">
+                    <div id="prepaidInactive" class="inactive-note hide">Votre compte n'est pas activé : les comptes prépayés sont indisponibles. Activez-le en jeu avec votre carte d'identité.</div>
+
+                    <div id="cardPrepaidManage" class="card-panel">
+                        <div class="panel-title">💳 Compte prépayé</div>
+                        <div id="prepaidCount" class="panel-desc">Comptes prépayés : 0 / 1</div>
+
+                        <div id="prepaidCreateFields">
+                            <div class="panel-desc">Choisissez le code à 4 chiffres qui servira à l'utiliser en jeu.</div>
+                            <input type="password" id="prepaidCodeInput" class="input-field" placeholder="Code à 4 chiffres" inputmode="numeric" maxlength="4" autocomplete="off" onfocus="clearPrepaidMessage()">
+                            <input type="password" id="prepaidCodeConfirmInput" class="input-field" placeholder="Confirmer le code" inputmode="numeric" maxlength="4" autocomplete="off" onfocus="clearPrepaidMessage()">
+                        </div>
+
+                        <div id="prepaidMessage" class="bank-feedback"></div>
+                        <button type="button" id="prepaidCreateBtn" class="btn-convert" onclick="creerPrepaye()">CRÉER UN COMPTE PRÉPAYÉ</button>
+                        <button type="button" id="prepaidDeleteBtn" class="btn-secondary" onclick="supprimerPrepaye()">Supprimer le compte prépayé</button>
+                    </div>
+
+                    <div id="prepaidCardList"></div>
+                </div>
+
             </div>
 
             <div id="emptyStateView" class="empty-state-view hide">
                 <div class="empty-bubble" id="emptyStateText"></div>
             </div>
 
+        </div>
+
+        <!-- ============================================================
+             NOUVEAU : VUE DU COMPTE PRÉPAYÉ (ids préfixés "pp")
+             On y arrive en cliquant sur la carte, dans l'onglet Prépayé.
+             ============================================================ -->
+        <div id="ppView" class="dashboard-view">
+
+            <div class="bank-header">
+                <button type="button" class="pp-back" onclick="retourCompteNormal()">← Compte normal</button>
+                <div class="user-greeting">Compte prépayé</div>
+                <div class="balance-container">
+                    <span id="ppBalMain" class="balance-main">0</span>
+                    <span id="ppBalCents" class="balance-cents">.00</span>
+                    <span class="balance-currency">EUR</span>
+                </div>
+                <div class="balance-label">Solde du compte prépayé</div>
+            </div>
+
+            <div class="content-body">
+                <div class="action-buttons">
+                    <button id="ppBtnTx" class="btn-action active" onclick="ppSwitchTab('transactions')">Transactions</button>
+                    <button id="ppBtnTransfer" class="btn-action" onclick="ppSwitchTab('transfer')">Virement</button>
+                    <button id="ppBtnSecurity" class="btn-action" onclick="ppSwitchTab('security')">Sécurité</button>
+                </div>
+
+                <div id="ppPanelTx" class="card-panel">
+                    <div class="panel-title">Dernières Transactions</div>
+                    <div id="ppTxList">
+                        <div style="font-size: 11px; color: #94a3b8;">Aucune transaction récente.</div>
+                    </div>
+                </div>
+
+                <div id="ppPanelTransfer" class="hide">
+                    <div id="ppTransferLocked" class="inactive-note hide">Un des deux comptes est verrouillé : les virements entre vos deux comptes sont indisponibles.</div>
+
+                    <div id="ppCardTransfer" class="card-panel">
+                        <div class="panel-title">🔁 Virement entre vos comptes</div>
+                        <div class="panel-desc">Déplacez de l'argent entre votre compte normal et votre compte prépayé. De 0,01 € à 10 000 €, sans frais.</div>
+
+                        <select id="ppSensInput" class="input-field">
+                            <option value="vers">Compte normal → Compte prépayé</option>
+                            <option value="depuis">Compte prépayé → Compte normal</option>
+                        </select>
+                        <input type="number" id="ppAmountInput" class="input-field" placeholder="Montant (de 0,01 à 10 000 €)" step="0.01" min="0.01" max="10000" onfocus="ppClearMessages()">
+
+                        <div id="ppTransferMessage" class="bank-feedback"></div>
+                        <button type="button" id="ppTransferBtn" class="btn-convert" onclick="ppFaireVirement()">EFFECTUER LE VIREMENT</button>
+                    </div>
+                </div>
+
+                <div id="ppPanelSecurity" class="hide">
+                    <div class="card-panel iban-card" onclick="copyIban('ppIbanValue', 'ppIbanHint')">
+                        <div class="panel-title">🆔 IBAN du compte prépayé</div>
+                        <div id="ppIbanValue" class="iban-value">—</div>
+                        <span id="ppIbanHint" class="iban-hint">Appuyer pour copier</span>
+                    </div>
+
+                    <div class="card-panel">
+                        <div class="panel-title">📊 Plafond de dépense journalier</div>
+                        <div id="ppPlafondInfo" class="panel-desc">—</div>
+                        <input type="number" id="ppPlafondInput" class="input-field" placeholder="Nouveau plafond (€ par jour)" step="0.01" min="0.01" onfocus="ppClearMessages()">
+                        <button type="button" id="ppPlafondSetBtn" class="btn-convert" onclick="ppDefinirPlafond()">DÉFINIR LE PLAFOND</button>
+                        <button type="button" id="ppPlafondRemoveBtn" class="btn-secondary" onclick="ppSupprimerPlafond()">Supprimer le plafond</button>
+                        <button type="button" id="ppDepensesResetBtn" class="btn-secondary" onclick="ppReinitialiserDepenses()">Remettre les dépenses du jour à zéro</button>
+                    </div>
+
+                    <div class="card-panel">
+                        <div class="panel-title">🔒 Verrouillage des dépenses</div>
+                        <div class="panel-desc">Verrouillé, votre compte prépayé ne peut plus faire de retrait, de dépôt ni de virement.</div>
+                        <button type="button" id="ppVerrouBtn" class="btn-secondary" onclick="ppBasculerVerrou()">—</button>
+                    </div>
+
+                    <div class="card-panel">
+                        <div class="panel-title">🔑 Code à 4 chiffres</div>
+                        <div class="panel-desc">Ce code sert à utiliser le compte prépayé en jeu. Après 5 mauvais codes, le compte est bloqué 15 minutes.</div>
+                        <input type="password" id="ppNewCodeInput" class="input-field" placeholder="Nouveau code (4 chiffres)" inputmode="numeric" maxlength="4" autocomplete="off" onfocus="ppClearMessages()">
+                        <input type="password" id="ppNewCodeConfirmInput" class="input-field" placeholder="Confirmer le nouveau code" inputmode="numeric" maxlength="4" autocomplete="off" onfocus="ppClearMessages()">
+                        <button type="button" id="ppCodeBtn" class="btn-convert" onclick="ppChangerCode()">CHANGER LE CODE</button>
+                    </div>
+
+                    <div id="ppSecurityMessage" class="bank-feedback"></div>
+                </div>
+            </div>
         </div>
 
         <!-- ============================================================
@@ -1248,6 +1405,7 @@
 
                 // NOUVEAU : IBAN et état du compte (activation, plafond, verrou, virements)
                 renderBankInfo(result);
+                renderPrepaye(result.prepaye || null);   // NOUVEAU : compte prépayé
 
                 document.getElementById("claimEmailInput").value = email;
                 document.getElementById("claimPasswordInput").value = password;
@@ -1273,27 +1431,31 @@
         document.getElementById("errorMessage").innerText = "";
     }
 
-    // Gère 4 onglets (Transactions, Ajouter, Virement, Sécurité)
+    // Gère 5 onglets (Transactions, Ajouter, Virement, Sécurité, Prépayé)
     function switchTab(tab) {
         const btnTx = document.getElementById("btnTx");
         const btnAdd = document.getElementById("btnAdd");
         const btnTransfer = document.getElementById("btnTransfer");
         const btnSecurity = document.getElementById("btnSecurity");
+        const btnPrepaid = document.getElementById("btnPrepaid");
 
         const panelTx = document.getElementById("panelTx");
         const panelAdd = document.getElementById("panelAdd");
         const panelTransfer = document.getElementById("panelTransfer");
         const panelSecurity = document.getElementById("panelSecurity");
+        const panelPrepaid = document.getElementById("panelPrepaid");
 
         btnTx.classList.remove('active');
         btnAdd.classList.remove('active');
         btnTransfer.classList.remove('active');
         btnSecurity.classList.remove('active');
+        btnPrepaid.classList.remove('active');
 
         panelTx.classList.add('hide');
         panelAdd.classList.add('hide');
         panelTransfer.classList.add('hide');
         panelSecurity.classList.add('hide');
+        panelPrepaid.classList.add('hide');
 
         if (tab === 'transactions') {
             btnTx.classList.add('active');
@@ -1307,6 +1469,9 @@
         } else if (tab === 'security') {
             btnSecurity.classList.add('active');
             panelSecurity.classList.remove('hide');
+        } else if (tab === 'prepaid') {
+            btnPrepaid.classList.add('active');
+            panelPrepaid.classList.remove('hide');
         }
     }
 
@@ -1483,6 +1648,44 @@
         return finalHtml;
     }
 
+    // Construit la liste des transactions à partir d'un message (compte normal ou compte prépayé)
+    function buildTxHtml(rawMessage) {
+        const txRegex = /::\s*([^;]+);\s*([^;]+);\s*([^;]+);\s*([^;]+);\s*([^\n<]+)/g;
+        let txMatch;
+        let txHtml = "";
+
+        while ((txMatch = txRegex.exec(rawMessage)) !== null) {
+            const jour = parseCustomMessage(txMatch[1].trim());
+            const heure = parseCustomMessage(txMatch[2].trim());
+            const ancienSolde = parseCustomMessage(txMatch[3].trim());
+            const montantVal = parseCustomMessage(txMatch[4].trim());
+
+            // NOUVEAU : une ligne qui commence par "VC|" est un virement entre comptes :
+            // on affiche l'IBAN de l'autre compte à la place du pseudo.
+            const dernierChamp = txMatch[5].trim();
+            const estVirementInterne = dernierChamp.indexOf("VI|") === 0;   // NOUVEAU : virement entre compte normal et prépayé
+            const estVirementCompte = dernierChamp.indexOf("VC|") === 0 || estVirementInterne;
+            const pseudo = parseCustomMessage(estVirementCompte ? dernierChamp.substring(3) : dernierChamp);
+            const libelle = estVirementInterne ? "Virement interne" : (estVirementCompte ? "Virement Compte" : "Virement Rimoft");
+
+            const isPositive = txMatch[4].includes('+');
+            const colorClass = isPositive ? 'tx-plus' : 'tx-minus';
+
+            // NOUVEAU : classes tx-wrap / tx-iban = le texte passe à la ligne au lieu d'être coupé par "..."
+            txHtml += `
+                <div class="transaction-item">
+                    <div class="tx-info">
+                        <span class="tx-title tx-wrap${estVirementCompte ? ' tx-iban' : ''}">${pseudo} • ${libelle}</span>
+                        <span class="tx-date tx-wrap">${ancienSolde} • ${jour} • ${heure}</span>
+                    </div>
+                    <div class="tx-amount ${colorClass}">${montantVal}</div>
+                </div>
+            `;
+        }
+
+        return txHtml;
+    }
+
     function parseAndRenderUserData(rawMessage) {
         const userMatch = rawMessage.match(/^([^\n<]+)/);
         if (userMatch) {
@@ -1516,37 +1719,7 @@
             }
         }
 
-        const txRegex = /::\s*([^;]+);\s*([^;]+);\s*([^;]+);\s*([^;]+);\s*([^\n<]+)/g;
-        let txMatch;
-        let txHtml = "";
-
-        while ((txMatch = txRegex.exec(rawMessage)) !== null) {
-            const jour = parseCustomMessage(txMatch[1].trim());
-            const heure = parseCustomMessage(txMatch[2].trim());
-            const ancienSolde = parseCustomMessage(txMatch[3].trim());
-            const montantVal = parseCustomMessage(txMatch[4].trim());
-
-            // NOUVEAU : une ligne qui commence par "VC|" est un virement entre comptes :
-            // on affiche l'IBAN de l'autre compte à la place du pseudo.
-            const dernierChamp = txMatch[5].trim();
-            const estVirementCompte = dernierChamp.indexOf("VC|") === 0;
-            const pseudo = parseCustomMessage(estVirementCompte ? dernierChamp.substring(3) : dernierChamp);
-            const libelle = estVirementCompte ? "Virement Compte" : "Virement Rimoft";
-
-            const isPositive = txMatch[4].includes('+');
-            const colorClass = isPositive ? 'tx-plus' : 'tx-minus';
-
-            // NOUVEAU : classes tx-wrap / tx-iban = le texte passe à la ligne au lieu d'être coupé par "..."
-            txHtml += `
-                <div class="transaction-item">
-                    <div class="tx-info">
-                        <span class="tx-title tx-wrap${estVirementCompte ? ' tx-iban' : ''}">${pseudo} • ${libelle}</span>
-                        <span class="tx-date tx-wrap">${ancienSolde} • ${jour} • ${heure}</span>
-                    </div>
-                    <div class="tx-amount ${colorClass}">${montantVal}</div>
-                </div>
-            `;
-        }
+        const txHtml = buildTxHtml(rawMessage);
 
         if (txHtml !== "") {
             document.getElementById("txList").innerHTML = txHtml;
@@ -1606,10 +1779,10 @@
         renderSecurity();
     }
 
-    function copyIban() {
-        const texte = document.getElementById("ibanValue").innerText;
+    function copyIban(idValeur, idAstuce) {
+        const texte = document.getElementById(idValeur || "ibanValue").innerText;
         if (!texte || texte === "—") return;
-        const hint = document.getElementById("ibanHint");
+        const hint = document.getElementById(idAstuce || "ibanHint");
         const fait = function () {
             hint.innerText = "IBAN copié !";
             setTimeout(function () { hint.innerText = "Appuyer pour copier"; }, 1500);
@@ -1642,6 +1815,7 @@
             if (result.status === "success") {
                 parseAndRenderUserData(result.message);
                 renderBankInfo(result);
+                renderPrepaye(result.prepaye || null);   // NOUVEAU : compte prépayé
             }
         } catch (e) {}
     }
@@ -1826,6 +2000,225 @@
     function basculerVirements() {
         if (!bankState) return;
         actionSecurite({ action: "virementsAcceptes", valeur: !bankState.virementsAcceptes }, document.getElementById("virementsBtn"));
+    }
+
+    // ============================================================
+    // NOUVEAU : COMPTE PRÉPAYÉ
+    // ============================================================
+    let prepayeState = null;   // compte prépayé du joueur (null = aucun)
+
+    function soldePrepaye(message) {
+        const m = (message || "").match(/€\s*\(Rimoft\)\s*:\s*([\d.]+)/i);
+        return m ? parseFloat(m[1]) : 0;
+    }
+
+    function clearPrepaidMessage() {
+        document.getElementById("prepaidMessage").innerText = "";
+    }
+
+    function ppClearMessages() {
+        document.getElementById("ppTransferMessage").innerText = "";
+        document.getElementById("ppSecurityMessage").innerText = "";
+    }
+
+    // Appelée après chaque réponse des scripts : met à jour l'onglet Prépayé et la vue du compte prépayé
+    function renderPrepaye(p) {
+        prepayeState = p || null;
+        renderPrepayeTab();
+        if (document.getElementById("ppView").style.display === "flex") {
+            if (prepayeState) { ppRender(); } else { retourCompteNormal(); }
+        }
+    }
+
+    // Onglet Prépayé du compte normal : boutons Créer / Supprimer et carte bancaire
+    function renderPrepayeTab() {
+        const inactif = compteInactif();
+        const existe = !!prepayeState;
+
+        setPanelLocked("cardPrepaidManage", false);   // on remet d'abord les boutons dans leur état normal
+
+        document.getElementById("prepaidInactive").classList.toggle("hide", !inactif);
+        document.getElementById("prepaidCount").innerText = "Comptes prépayés : " + (existe ? 1 : 0) + " / 1";
+        document.getElementById("prepaidCreateFields").classList.toggle("hide", existe);
+
+        const btnCreer = document.getElementById("prepaidCreateBtn");
+        btnCreer.innerText = existe ? "Limite atteinte (1 / 1)" : "CRÉER UN COMPTE PRÉPAYÉ";
+        btnCreer.disabled = existe;
+        document.getElementById("prepaidDeleteBtn").disabled = !existe;
+
+        const liste = document.getElementById("prepaidCardList");
+        if (!existe) {
+            liste.innerHTML = "";
+        } else {
+            const parties = soldePrepaye(prepayeState.message).toFixed(2).split(".");
+            liste.innerHTML =
+                '<div class="prepaid-card" onclick="ouvrirPrepaye()">' +
+                    '<div class="prepaid-card-top"><span>COMPTE PRÉPAYÉ</span><span class="prepaid-chip"></span></div>' +
+                    '<div class="prepaid-card-balance">' +
+                        '<span class="balance-main">' + parties[0] + '</span>' +
+                        '<span class="balance-cents">.' + parties[1] + '</span>' +
+                        '<span class="balance-currency">EUR</span>' +
+                    '</div>' +
+                    '<div class="prepaid-card-hint">Appuyer pour ouvrir</div>' +
+                '</div>' +
+                '<div class="prepaid-iban"></div>';
+            liste.querySelector(".prepaid-iban").innerText = "IBAN : " + prepayeState.iban;
+        }
+
+        if (inactif) setPanelLocked("cardPrepaidManage", true);
+    }
+
+    // Envoie une action du compte prépayé et met toute la page à jour avec la réponse
+    async function actionPrepaye(donnees, idMessage, bouton) {
+        bouton.disabled = true;
+        showFeedback(idMessage, "", true);
+        const result = await callBanque(donnees);
+        bouton.disabled = false;
+        if (result.status === "success") {
+            showFeedback(idMessage, result.message, true);
+            if (result.parametres) bankState = result.parametres;
+            if (result.compte) parseAndRenderUserData(result.compte);
+            if ("prepaye" in result) { renderPrepaye(result.prepaye); } else { renderPrepayeTab(); }
+            renderSecurity();
+        } else {
+            showFeedback(idMessage, result.message, false);
+            renderPrepayeTab();
+        }
+        return result.status === "success";
+    }
+
+    async function creerPrepaye() {
+        const code = document.getElementById("prepaidCodeInput").value.trim();
+        const confirmation = document.getElementById("prepaidCodeConfirmInput").value.trim();
+        if (!/^\d{4}$/.test(code)) { showFeedback("prepaidMessage", "Le code doit contenir exactement 4 chiffres.", false); return; }
+        if (code !== confirmation) { showFeedback("prepaidMessage", "Les deux codes ne sont pas identiques.", false); return; }
+        const ok = await actionPrepaye({ action: "creerPrepaye", code: code }, "prepaidMessage", document.getElementById("prepaidCreateBtn"));
+        if (ok) {
+            document.getElementById("prepaidCodeInput").value = "";
+            document.getElementById("prepaidCodeConfirmInput").value = "";
+        }
+    }
+
+    async function supprimerPrepaye() {
+        if (!prepayeState) return;
+        if (!window.confirm("Supprimer le compte prépayé ? L'argent qu'il contient sera remis sur votre compte normal. Cette action est irréversible.")) return;
+        await actionPrepaye({ action: "supprimerPrepaye" }, "prepaidMessage", document.getElementById("prepaidDeleteBtn"));
+    }
+
+    // ---------- Vue du compte prépayé ----------
+    function ouvrirPrepaye() {
+        if (!prepayeState) return;
+        document.getElementById("dashboardView").style.display = "none";
+        document.getElementById("ppView").style.display = "flex";
+        ppSwitchTab("transactions");
+        ppRender();
+    }
+
+    function retourCompteNormal() {
+        document.getElementById("ppView").style.display = "none";
+        document.getElementById("dashboardView").style.display = "flex";
+    }
+
+    function ppSwitchTab(tab) {
+        ["Tx", "Transfer", "Security"].forEach(function (nom) {
+            document.getElementById("ppBtn" + nom).classList.remove("active");
+            document.getElementById("ppPanel" + nom).classList.add("hide");
+        });
+        const nom = (tab === "transfer") ? "Transfer" : (tab === "security" ? "Security" : "Tx");
+        document.getElementById("ppBtn" + nom).classList.add("active");
+        document.getElementById("ppPanel" + nom).classList.remove("hide");
+    }
+
+    function ppRender() {
+        const p = prepayeState;
+        if (!p) return;
+
+        const parties = soldePrepaye(p.message).toFixed(2).split(".");
+        document.getElementById("ppBalMain").innerText = parties[0];
+        document.getElementById("ppBalCents").innerText = "." + parties[1];
+
+        const tx = buildTxHtml(p.message);
+        document.getElementById("ppTxList").innerHTML = tx !== ""
+            ? tx
+            : '<div style="font-size: 11px; color: #94a3b8;">Aucune transaction récente.</div>';
+
+        document.getElementById("ppIbanValue").innerText = p.iban;
+
+        const depense = Number(p.depensesDuJour || 0);
+        if (p.plafond === null || p.plafond === undefined) {
+            document.getElementById("ppPlafondInfo").innerText =
+                "Aucun plafond défini. Dépensé aujourd'hui : " + formatEuro(depense) + " €.";
+        } else {
+            const reste = Math.max(0, Number(p.plafond) - depense);
+            document.getElementById("ppPlafondInfo").innerText =
+                "Plafond : " + formatEuro(p.plafond) + " € par jour. Dépensé aujourd'hui : " +
+                formatEuro(depense) + " €. Il vous reste " + formatEuro(reste) + " €.";
+        }
+
+        const verrou = document.getElementById("ppVerrouBtn");
+        verrou.innerText = p.verrouille ? "🔓 Déverrouiller le compte prépayé" : "🔒 Verrouiller le compte prépayé";
+        verrou.classList.toggle("is-on", !!p.verrouille);
+
+        // Virement entre les deux comptes : grisé si l'un des deux est verrouillé
+        const bloque = (!!bankState && !!bankState.depensesVerrouillees) || !!p.verrouille;
+        document.getElementById("ppTransferLocked").classList.toggle("hide", !bloque);
+        setPanelLocked("ppCardTransfer", bloque);
+    }
+
+    async function ppFaireVirement() {
+        const sens = document.getElementById("ppSensInput").value;
+        const montantTexte = document.getElementById("ppAmountInput").value.trim();
+        const montant = parseFloat(montantTexte);
+        if (!/^\d+(\.\d{1,2})?$/.test(montantTexte)) {
+            showFeedback("ppTransferMessage", "Le montant doit être un nombre, avec 2 chiffres maximum après la virgule.", false);
+            return;
+        }
+        if (isNaN(montant) || montant < 0.01 || montant > 10000) {
+            showFeedback("ppTransferMessage", "Le montant doit être compris entre 0,01 € et 10 000 €.", false);
+            return;
+        }
+        const ok = await actionPrepaye({ action: "transfertPrepaye", sens: sens, montant: montant }, "ppTransferMessage", document.getElementById("ppTransferBtn"));
+        if (ok) document.getElementById("ppAmountInput").value = "";
+    }
+
+    async function ppDefinirPlafond() {
+        const montantTexte = document.getElementById("ppPlafondInput").value.trim();
+        const montant = parseFloat(montantTexte);
+        if (isNaN(montant) || montant <= 0) {
+            showFeedback("ppSecurityMessage", "Entrez un plafond supérieur à 0 €.", false);
+            return;
+        }
+        if (!/^\d+(\.\d{1,2})?$/.test(montantTexte)) {
+            showFeedback("ppSecurityMessage", "Le plafond doit avoir 2 chiffres maximum après la virgule.", false);
+            return;
+        }
+        const ok = await actionPrepaye({ action: "plafondPrepaye", montant: montant }, "ppSecurityMessage", document.getElementById("ppPlafondSetBtn"));
+        if (ok) document.getElementById("ppPlafondInput").value = "";
+    }
+
+    function ppSupprimerPlafond() {
+        actionPrepaye({ action: "supprimerPlafondPrepaye" }, "ppSecurityMessage", document.getElementById("ppPlafondRemoveBtn"));
+    }
+
+    function ppReinitialiserDepenses() {
+        actionPrepaye({ action: "reinitialiserDepensesPrepaye" }, "ppSecurityMessage", document.getElementById("ppDepensesResetBtn"));
+    }
+
+    function ppBasculerVerrou() {
+        if (!prepayeState) return;
+        actionPrepaye({ action: "verrouPrepaye", valeur: !prepayeState.verrouille }, "ppSecurityMessage", document.getElementById("ppVerrouBtn"));
+    }
+
+    async function ppChangerCode() {
+        const code = document.getElementById("ppNewCodeInput").value.trim();
+        const confirmation = document.getElementById("ppNewCodeConfirmInput").value.trim();
+        if (!/^\d{4}$/.test(code)) { showFeedback("ppSecurityMessage", "Le code doit contenir exactement 4 chiffres.", false); return; }
+        if (code !== confirmation) { showFeedback("ppSecurityMessage", "Les deux codes ne sont pas identiques.", false); return; }
+        const ok = await actionPrepaye({ action: "codePrepaye", code: code }, "ppSecurityMessage", document.getElementById("ppCodeBtn"));
+        if (ok) {
+            document.getElementById("ppNewCodeInput").value = "";
+            document.getElementById("ppNewCodeConfirmInput").value = "";
+        }
     }
 </script>
 

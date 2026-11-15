@@ -1034,7 +1034,7 @@
 
                         <div id="prepaidMessage" class="bank-feedback"></div>
                         <button type="button" id="prepaidCreateBtn" class="btn-convert" onclick="creerPrepaye()">CRÉER UN COMPTE PRÉPAYÉ</button>
-                        <button type="button" id="prepaidDeleteBtn" class="btn-secondary" onclick="supprimerPrepaye()">Supprimer le compte prépayé</button>
+                        <div id="prepaidDeleteHint" class="panel-desc hide" style="margin-top: 8px; margin-bottom: 0;">Pour supprimer le compte prépayé, ouvrez-le (appuyez sur la carte), puis allez dans l'onglet Sécurité.</div>
                     </div>
 
                     <div id="prepaidCardList"></div>
@@ -1125,6 +1125,12 @@
                         <input type="password" id="ppNewCodeInput" class="input-field" placeholder="Nouveau code (4 chiffres)" inputmode="numeric" maxlength="4" autocomplete="off" onfocus="ppClearMessages()">
                         <input type="password" id="ppNewCodeConfirmInput" class="input-field" placeholder="Confirmer le nouveau code" inputmode="numeric" maxlength="4" autocomplete="off" onfocus="ppClearMessages()">
                         <button type="button" id="ppCodeBtn" class="btn-convert" onclick="ppChangerCode()">CHANGER LE CODE</button>
+                    </div>
+
+                    <div class="card-panel">
+                        <div class="panel-title">🗑️ Supprimer le compte prépayé</div>
+                        <div class="panel-desc">La suppression est irréversible. L'argent qui reste sur le compte prépayé sera remis sur votre compte normal.</div>
+                        <button type="button" id="ppDeleteBtn" class="btn-secondary" onclick="supprimerPrepaye()">Supprimer le compte prépayé</button>
                     </div>
 
                     <div id="ppSecurityMessage" class="bank-feedback"></div>
@@ -2045,7 +2051,7 @@
         const btnCreer = document.getElementById("prepaidCreateBtn");
         btnCreer.innerText = existe ? "Limite atteinte (1 / 1)" : "CRÉER UN COMPTE PRÉPAYÉ";
         btnCreer.disabled = existe;
-        document.getElementById("prepaidDeleteBtn").disabled = !existe;
+        document.getElementById("prepaidDeleteHint").classList.toggle("hide", !existe);
 
         const liste = document.getElementById("prepaidCardList");
         if (!existe) {
@@ -2099,10 +2105,35 @@
         }
     }
 
+    // Confirmation DANS la page (les fenêtres confirm() sont bloquées dans une page intégrée) :
+    // 1er clic = le bouton demande confirmation pendant 6 secondes, 2e clic = suppression.
+    let suppressionEnAttente = false;
+    let minuteurSuppression = null;
+
+    function reinitialiserBoutonSuppression() {
+        suppressionEnAttente = false;
+        clearTimeout(minuteurSuppression);
+        const btn = document.getElementById("ppDeleteBtn");
+        btn.innerText = "Supprimer le compte prépayé";
+        btn.classList.remove("is-on");
+    }
+
     async function supprimerPrepaye() {
         if (!prepayeState) return;
-        if (!window.confirm("Supprimer le compte prépayé ? L'argent qu'il contient sera remis sur votre compte normal. Cette action est irréversible.")) return;
-        await actionPrepaye({ action: "supprimerPrepaye" }, "prepaidMessage", document.getElementById("prepaidDeleteBtn"));
+        const btn = document.getElementById("ppDeleteBtn");
+
+        if (!suppressionEnAttente) {
+            suppressionEnAttente = true;
+            btn.innerText = "Cliquer pour confirmer la suppression";
+            btn.classList.add("is-on");
+            minuteurSuppression = setTimeout(reinitialiserBoutonSuppression, 6000);
+            return;
+        }
+
+        reinitialiserBoutonSuppression();
+        const ok = await actionPrepaye({ action: "supprimerPrepaye" }, "ppSecurityMessage", btn);
+        // Après la suppression on revient au compte normal : le message s'affiche dans l'onglet Prépayé
+        if (ok) showFeedback("prepaidMessage", document.getElementById("ppSecurityMessage").innerText, true);
     }
 
     // ---------- Vue du compte prépayé ----------
@@ -2115,6 +2146,7 @@
     }
 
     function retourCompteNormal() {
+        reinitialiserBoutonSuppression();
         document.getElementById("ppView").style.display = "none";
         document.getElementById("dashboardView").style.display = "flex";
     }

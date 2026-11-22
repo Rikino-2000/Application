@@ -838,6 +838,14 @@
             z-index: 2;
         }
         .pp-back:hover { background: rgba(255, 255, 255, 0.3); }
+
+        /* Couleurs des comptes prépayés (le premier est toujours bleu) */
+        .prepaid-card.c-vert, .bank-header.c-vert { background: linear-gradient(135deg, #059669 0%, #065f46 100%); }
+        .prepaid-card.c-violet, .bank-header.c-violet { background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); }
+        .prepaid-card.c-rouge, .bank-header.c-rouge { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); }
+        .prepaid-card.c-orange, .bank-header.c-orange { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); }
+        .prepaid-card.c-rose, .bank-header.c-rose { background: linear-gradient(135deg, #db2777 0%, #9d174d 100%); }
+        .prepaid-card.c-gris, .bank-header.c-gris { background: linear-gradient(135deg, #64748b 0%, #334155 100%); }
     </style>
 </head>
 <body>
@@ -1023,7 +1031,7 @@
                     <div id="prepaidInactive" class="inactive-note hide">Votre compte n'est pas activé : les comptes prépayés sont indisponibles. Activez-le en jeu avec votre carte d'identité.</div>
 
                     <div id="cardPrepaidManage" class="card-panel">
-                        <div class="panel-title">💳 Compte prépayé</div>
+                        <div class="panel-title">💳 Comptes prépayés</div>
                         <div id="prepaidCount" class="panel-desc">Comptes prépayés : 0 / 1</div>
 
                         <div id="prepaidCreateFields">
@@ -1034,7 +1042,7 @@
 
                         <div id="prepaidMessage" class="bank-feedback"></div>
                         <button type="button" id="prepaidCreateBtn" class="btn-convert" onclick="creerPrepaye()">CRÉER UN COMPTE PRÉPAYÉ</button>
-                        <div id="prepaidDeleteHint" class="panel-desc hide" style="margin-top: 8px; margin-bottom: 0;">Pour supprimer le compte prépayé, ouvrez-le (appuyez sur la carte), puis allez dans l'onglet Sécurité.</div>
+                        <div id="prepaidDeleteHint" class="panel-desc hide" style="margin-top: 8px; margin-bottom: 0;">Pour supprimer un compte prépayé, ouvrez-le (appuyez sur sa carte), puis allez dans l'onglet Sécurité.</div>
                     </div>
 
                     <div id="prepaidCardList"></div>
@@ -1054,7 +1062,7 @@
              ============================================================ -->
         <div id="ppView" class="dashboard-view">
 
-            <div class="bank-header">
+            <div id="ppHeader" class="bank-header">
                 <button type="button" class="pp-back" onclick="retourCompteNormal()">← Compte normal</button>
                 <div class="user-greeting">Compte prépayé</div>
                 <div class="balance-container">
@@ -1412,7 +1420,7 @@
 
                 // NOUVEAU : IBAN et état du compte (activation, plafond, verrou, virements)
                 renderBankInfo(result);
-                renderPrepaye(result.prepaye || null);   // NOUVEAU : compte prépayé
+                renderPrepayes(result.prepayes || [], result.maxPrepayes);   // NOUVEAU : comptes prépayés
 
                 document.getElementById("claimEmailInput").value = email;
                 document.getElementById("claimPasswordInput").value = password;
@@ -1822,7 +1830,7 @@
             if (result.status === "success") {
                 parseAndRenderUserData(result.message);
                 renderBankInfo(result);
-                renderPrepaye(result.prepaye || null);   // NOUVEAU : compte prépayé
+                renderPrepayes(result.prepayes || [], result.maxPrepayes);   // NOUVEAU : comptes prépayés
             }
         } catch (e) {}
     }
@@ -2010,9 +2018,20 @@
     }
 
     // ============================================================
-    // NOUVEAU : COMPTE PRÉPAYÉ
+    // NOUVEAU : COMPTES PRÉPAYÉS
     // ============================================================
-    let prepayeState = null;   // compte prépayé du joueur (null = aucun)
+    let prepayesState = [];      // comptes prépayés du joueur
+    let maxPrepayes = 1;         // nombre maximum de comptes prépayés (envoyé par les scripts)
+    let prepayeCourant = "";     // IBAN du compte prépayé ouvert dans la vue
+    const COULEURS_CARTES = ["bleu", "vert", "violet", "rouge", "orange", "rose", "gris"];
+
+    function couleurCarte(p) {
+        return (p && COULEURS_CARTES.indexOf(p.couleur) !== -1) ? p.couleur : "bleu";
+    }
+
+    function prepayeActuel() {
+        return prepayesState.find(function (p) { return p.iban === prepayeCourant; }) || null;
+    }
 
     function soldePrepaye(message) {
         const m = (message || "").match(/€\s*\(Rimoft\)\s*:\s*([\d.]+)/i);
@@ -2028,63 +2047,66 @@
         document.getElementById("ppSecurityMessage").innerText = "";
     }
 
-    // Appelée après chaque réponse des scripts : met à jour l'onglet Prépayé et la vue du compte prépayé
-    function renderPrepaye(p) {
-        prepayeState = p || null;
+    // Appelée après chaque réponse des scripts : met à jour l'onglet Prépayé et la vue du compte ouvert
+    function renderPrepayes(liste, max) {
+        prepayesState = Array.isArray(liste) ? liste : [];
+        if (typeof max === "number") maxPrepayes = max;
         renderPrepayeTab();
         if (document.getElementById("ppView").style.display === "flex") {
-            if (prepayeState) { ppRender(); } else { retourCompteNormal(); }
+            if (prepayeActuel()) { ppRender(); } else { retourCompteNormal(); }
         }
     }
 
-    // Onglet Prépayé du compte normal : boutons Créer / Supprimer et carte bancaire
+    // Onglet Prépayé du compte normal : compteur, bouton Créer et cartes bancaires
     function renderPrepayeTab() {
         const inactif = compteInactif();
-        const existe = !!prepayeState;
+        const nombre = prepayesState.length;
+        const peutCreer = nombre < maxPrepayes;
 
         setPanelLocked("cardPrepaidManage", false);   // on remet d'abord les boutons dans leur état normal
 
         document.getElementById("prepaidInactive").classList.toggle("hide", !inactif);
-        document.getElementById("prepaidCount").innerText = "Comptes prépayés : " + (existe ? 1 : 0) + " / 1";
-        document.getElementById("prepaidCreateFields").classList.toggle("hide", existe);
+        document.getElementById("prepaidCount").innerText = "Comptes prépayés : " + nombre + " / " + maxPrepayes;
+        document.getElementById("prepaidCreateFields").classList.toggle("hide", !peutCreer);
 
         const btnCreer = document.getElementById("prepaidCreateBtn");
-        btnCreer.innerText = existe ? "Limite atteinte (1 / 1)" : "CRÉER UN COMPTE PRÉPAYÉ";
-        btnCreer.disabled = existe;
-        document.getElementById("prepaidDeleteHint").classList.toggle("hide", !existe);
+        btnCreer.innerText = peutCreer ? "CRÉER UN COMPTE PRÉPAYÉ" : "Limite atteinte (" + nombre + " / " + maxPrepayes + ")";
+        btnCreer.disabled = !peutCreer;
+        document.getElementById("prepaidDeleteHint").classList.toggle("hide", nombre === 0);
 
         const liste = document.getElementById("prepaidCardList");
-        if (!existe) {
-            liste.innerHTML = "";
-        } else {
-            const parties = soldePrepaye(prepayeState.message).toFixed(2).split(".");
-            liste.innerHTML =
-                '<div class="prepaid-card" onclick="ouvrirPrepaye()">' +
-                    '<div class="prepaid-card-top"><span>COMPTE PRÉPAYÉ</span><span class="prepaid-chip"></span></div>' +
-                    '<div class="prepaid-card-balance">' +
-                        '<span class="balance-main">' + parties[0] + '</span>' +
-                        '<span class="balance-cents">.' + parties[1] + '</span>' +
-                        '<span class="balance-currency">EUR</span>' +
-                    '</div>' +
-                    '<div class="prepaid-card-hint"></div>' +
-                '</div>';
-            liste.querySelector(".prepaid-card-hint").innerText = prepayeState.iban;
-        }
+        liste.innerHTML = "";
+        prepayesState.forEach(function (p) {
+            const parties = soldePrepaye(p.message).toFixed(2).split(".");
+            const carte = document.createElement("div");
+            carte.className = "prepaid-card c-" + couleurCarte(p);
+            carte.innerHTML =
+                '<div class="prepaid-card-top"><span>COMPTE PRÉPAYÉ</span><span class="prepaid-chip"></span></div>' +
+                '<div class="prepaid-card-balance">' +
+                    '<span class="balance-main">' + parties[0] + '</span>' +
+                    '<span class="balance-cents">.' + parties[1] + '</span>' +
+                    '<span class="balance-currency">EUR</span>' +
+                '</div>' +
+                '<div class="prepaid-card-hint"></div>';
+            carte.querySelector(".prepaid-card-hint").innerText = p.iban;
+            carte.addEventListener("click", function () { ouvrirPrepaye(p.iban); });
+            liste.appendChild(carte);
+        });
 
         if (inactif) setPanelLocked("cardPrepaidManage", true);
     }
 
-    // Envoie une action du compte prépayé et met toute la page à jour avec la réponse
+    // Envoie une action du compte prépayé (avec l'IBAN du compte ouvert) et met toute la page à jour
     async function actionPrepaye(donnees, idMessage, bouton) {
         bouton.disabled = true;
         showFeedback(idMessage, "", true);
-        const result = await callBanque(donnees);
+        const result = await callBanque(Object.assign({ iban: prepayeCourant }, donnees));
         bouton.disabled = false;
         if (result.status === "success") {
             showFeedback(idMessage, result.message, true);
             if (result.parametres) bankState = result.parametres;
             if (result.compte) parseAndRenderUserData(result.compte);
-            if ("prepaye" in result) { renderPrepaye(result.prepaye); } else { renderPrepayeTab(); }
+            if ("prepayes" in result) { renderPrepayes(result.prepayes, result.maxPrepayes); } else { renderPrepayeTab(); }
             renderSecurity();
         } else {
             showFeedback(idMessage, result.message, false);
@@ -2119,7 +2141,7 @@
     }
 
     async function supprimerPrepaye() {
-        if (!prepayeState) return;
+        if (!prepayeActuel()) return;
         const btn = document.getElementById("ppDeleteBtn");
 
         if (!suppressionEnAttente) {
@@ -2136,9 +2158,12 @@
         if (ok) showFeedback("prepaidMessage", document.getElementById("ppSecurityMessage").innerText, true);
     }
 
-    // ---------- Vue du compte prépayé ----------
-    function ouvrirPrepaye() {
-        if (!prepayeState) return;
+    // ---------- Vue d'un compte prépayé ----------
+    function ouvrirPrepaye(iban) {
+        prepayeCourant = iban;
+        if (!prepayeActuel()) return;
+        reinitialiserBoutonSuppression();
+        ppClearMessages();
         document.getElementById("dashboardView").style.display = "none";
         document.getElementById("ppView").style.display = "flex";
         ppSwitchTab("transactions");
@@ -2162,8 +2187,10 @@
     }
 
     function ppRender() {
-        const p = prepayeState;
+        const p = prepayeActuel();
         if (!p) return;
+
+        document.getElementById("ppHeader").className = "bank-header c-" + couleurCarte(p);
 
         const parties = soldePrepaye(p.message).toFixed(2).split(".");
         document.getElementById("ppBalMain").innerText = parties[0];
@@ -2237,8 +2264,9 @@
     }
 
     function ppBasculerVerrou() {
-        if (!prepayeState) return;
-        actionPrepaye({ action: "verrouPrepaye", valeur: !prepayeState.verrouille }, "ppSecurityMessage", document.getElementById("ppVerrouBtn"));
+        const p = prepayeActuel();
+        if (!p) return;
+        actionPrepaye({ action: "verrouPrepaye", valeur: !p.verrouille }, "ppSecurityMessage", document.getElementById("ppVerrouBtn"));
     }
 
     async function ppChangerCode() {
